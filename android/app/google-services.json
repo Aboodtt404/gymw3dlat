@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "543958061022",
+    "project_id": "gymw3dlat",
+    "storage_bucket": "gymw3dlat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:543958061022:android:0ea7f21908377d880c974f",
+        "android_client_info": {
+          "package_name": "com.gymw3dlat.gymw3dlat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoMT1ALvwdc3g5IIm8A-d0Os_nERBQqxs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
