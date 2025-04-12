@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'services/supabase_service.dart';
 import 'providers/user_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/home/home_screen.dart';
+import 'utils/styles.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,21 +21,7 @@ class MyApp extends StatelessWidget {
       providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
       child: MaterialApp(
         title: 'GymW3dlat',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        ),
-        themeMode: ThemeMode.system,
+        theme: Styles.darkTheme(),
         home: const AuthWrapper(),
       ),
     );
@@ -50,15 +38,16 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Styles.primaryColor),
+              ),
+            ),
           );
         }
 
-        // TODO: Replace with HomeScreen when created
         if (snapshot.hasData && SupabaseService.currentUser != null) {
-          return const Scaffold(
-            body: Center(child: Text('Welcome to GymW3dlat!')),
-          );
+          return const HomeScreen();
         }
 
         return const LoginScreen();
