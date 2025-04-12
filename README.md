@@ -31,8 +31,7 @@ GymW3dlat is a comprehensive fitness tracking application built with Flutter tha
 ## Tech Stack
 
 - Flutter for cross-platform development
-- Firebase for backend and authentication
-- Supabase for real-time data sync
+- Supabase for backend and authentication
 - Machine Learning for smart suggestions
 
 ## Getting Started
