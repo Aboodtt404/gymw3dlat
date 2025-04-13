@@ -15,24 +15,25 @@ class FoodService {
         throw Exception('User not authenticated');
       }
 
-      // First, search in local database and join with meal_logs to get meal_log_id
+      // First, search in local database and left join with meal_logs to get meal_log_id if it exists
       final localResponse = await _supabase
           .from('foods')
           .select('''
             *,
-            meal_logs!inner (
-              id
+            meal_logs!left (
+              id,
+              user_id
             )
           ''')
           .textSearch('name', query)
-          .eq('meal_logs.user_id', userId)
+          .or('meal_logs.is.null,meal_logs.user_id.eq.$userId')
           .order('name')
           .limit(20);
 
       final localFoods = localResponse
           .map((json) => Food.fromJson({
                 ...json,
-                'meal_log_id': json['meal_logs'][0]['id'],
+                'meal_log_id': json['meal_logs']?[0]?['id'],
               }))
           .toList();
 
@@ -135,6 +136,48 @@ class FoodService {
           .eq('user_id', userId);
     } catch (e) {
       throw Exception('Failed to delete meal log: $e');
+    }
+  }
+
+  Future<Map<MealType, List<Food>>> getMealsByType() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await _supabase
+          .from('meal_logs')
+          .select('''
+            *,
+            foods (*)
+          ''')
+          .eq('user_id', userId)
+          .gte('created_at',
+              DateTime.now().toUtc().subtract(const Duration(days: 1)))
+          .order('created_at');
+
+      final meals = {
+        MealType.breakfast: <Food>[],
+        MealType.lunch: <Food>[],
+        MealType.dinner: <Food>[],
+        MealType.snack: <Food>[],
+      };
+
+      for (final log in response) {
+        final food = Food.fromJson({
+          ...log['foods'],
+          'meal_log_id': log['id'],
+        });
+        final mealType = MealType.values.firstWhere(
+          (type) => type.name == log['meal_type'],
+        );
+        meals[mealType]!.add(food);
+      }
+
+      return meals;
+    } catch (e) {
+      throw Exception('Failed to load meals: $e');
     }
   }
 }

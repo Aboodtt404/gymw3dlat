@@ -342,7 +342,8 @@ class _MealLogScreenState extends State<MealLogScreen> {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const FoodSearchScreen(),
+              builder: (context) =>
+                  const FoodSearchScreen(mealType: MealType.snack),
             ),
           );
           if (result == true) {

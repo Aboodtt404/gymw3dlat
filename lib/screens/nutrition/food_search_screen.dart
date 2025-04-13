@@ -6,7 +6,12 @@ import '../../utils/app_constants.dart';
 import '../../utils/styles.dart';
 
 class FoodSearchScreen extends StatefulWidget {
-  const FoodSearchScreen({super.key});
+  final MealType mealType;
+
+  const FoodSearchScreen({
+    super.key,
+    required this.mealType,
+  });
 
   @override
   State<FoodSearchScreen> createState() => _FoodSearchScreenState();
@@ -48,41 +53,16 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
   }
 
   void _selectFood(Food food) async {
-    MealType? selectedMealType = await showDialog<MealType>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Meal Type'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: MealType.values.map((type) {
-              return ListTile(
-                title: Text(type.name),
-                onTap: () {
-                  Navigator.of(context).pop(type);
-                },
-              );
-            }).toList(),
-          ),
+    try {
+      await _foodService.logFood(food, widget.mealType);
+      if (mounted) {
+        Navigator.pop(context, food);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add food: $e')),
         );
-      },
-    );
-
-    if (selectedMealType != null) {
-      try {
-        await _foodService.logFood(food, selectedMealType);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Food added successfully')),
-          );
-          Navigator.of(context).pop();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to add food: $e')),
-          );
-        }
       }
     }
   }
@@ -138,8 +118,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Foods'),
-        centerTitle: true,
+        title: Text('Add Food to ${widget.mealType.name}'),
       ),
       body: Column(
         children: [
@@ -170,7 +149,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                 filled: true,
                 fillColor: Colors.transparent,
               ),
-              onChanged: (value) => _searchFoods(value),
+              onChanged: _searchFoods,
             ),
           ),
           if (_isLoading)
@@ -283,15 +262,12 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                               onPressed: () => _deleteFood(food),
                             )
                           else
-                            Icon(
-                              Icons.add_circle_outline,
-                              color: Theme.of(context).colorScheme.primary,
+                            IconButton(
+                              icon: const Icon(Icons.add_circle_outline),
+                              onPressed: () => _selectFood(food),
                             ),
                         ],
                       ),
-                      onTap: () => food.mealLogId != null
-                          ? _deleteFood(food)
-                          : _selectFood(food),
                     ),
                   );
                 },
