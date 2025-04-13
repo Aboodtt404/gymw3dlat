@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'services/supabase_service.dart';
 import 'providers/user_provider.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/main_screen.dart';
 import 'utils/styles.dart';
 
 void main() async {
@@ -47,7 +47,7 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (snapshot.hasData && SupabaseService.currentUser != null) {
-          return const HomeScreen();
+          return const MainScreen();
         }
 
         return const LoginScreen();

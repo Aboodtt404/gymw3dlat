@@ -1,5 +1,5 @@
 name: gymw3dlat
-description: "A new Flutter project."
+description: A fitness tracking application with nutrition and workout features.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -19,7 +19,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -35,7 +35,7 @@ dependencies:
   supabase_flutter: ^2.3.4
 
   # State management
-  provider: ^6.1.2
+  provider: ^6.1.1
 
   # UI components
   cupertino_icons: ^1.0.2
@@ -52,6 +52,9 @@ dependencies:
   intl: ^0.19.0
   flutter_localizations:
     sdk: flutter
+  http: ^1.1.0
+  fl_chart: ^0.66.2
+  uuid: ^4.3.3
 
 dev_dependencies:
   flutter_test:
@@ -62,7 +65,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^3.0.1
+  flutter_lints: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
