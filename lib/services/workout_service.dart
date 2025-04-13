@@ -47,15 +47,24 @@ class WorkoutService {
   }
 
   Future<List<WorkoutTemplate>> getUserWorkoutTemplates(String userId) async {
-    final response = await SupabaseService.client
-        .from(AppConstants.workoutsCollection)
-        .select()
-        .eq('user_id', userId)
-        .order('created_at', ascending: false);
+    try {
+      print(
+          'Fetching workout templates from ${AppConstants.workoutsCollection}');
+      final response = await SupabaseService.client
+          .from(AppConstants.workoutsCollection)
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
 
-    return (response as List)
-        .map((json) => WorkoutTemplate.fromJson(json))
-        .toList();
+      print('Response from Supabase: $response');
+      return (response as List)
+          .map((json) => WorkoutTemplate.fromJson(json))
+          .toList();
+    } catch (e, stackTrace) {
+      print('Error in getUserWorkoutTemplates: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   Future<WorkoutTemplate> updateWorkoutTemplate(

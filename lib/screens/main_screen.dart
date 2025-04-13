@@ -3,7 +3,7 @@ import '../utils/styles.dart';
 import 'home/home_screen.dart';
 import 'nutrition/meal_log_screen.dart';
 import 'profile/profile_screen.dart';
-import 'workout/workout_templates_screen.dart';
+import 'workout/workout_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final List<Widget> _screens = [
     const HomeScreen(),
-    const WorkoutTemplatesScreen(),
+    const WorkoutScreen(),
     const MealLogScreen(),
     const ProfileScreen(),
   ];

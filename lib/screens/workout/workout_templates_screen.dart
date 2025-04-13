@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gymw3dlat/constants/app_constants.dart';
-import 'package:gymw3dlat/models/workout_models.dart';
-import 'package:gymw3dlat/services/workout_service.dart';
-import 'package:gymw3dlat/utils/styles.dart';
-import 'package:provider/provider.dart';
-import 'package:gymw3dlat/providers/user_provider.dart';
-import 'edit_workout_template_screen.dart';
+import '../../models/workout_template_model.dart';
+import '../../services/workout_template_service.dart';
+import '../../utils/styles.dart';
 
 class WorkoutTemplatesScreen extends StatefulWidget {
   const WorkoutTemplatesScreen({super.key});
@@ -15,7 +11,7 @@ class WorkoutTemplatesScreen extends StatefulWidget {
 }
 
 class _WorkoutTemplatesScreenState extends State<WorkoutTemplatesScreen> {
-  final WorkoutService _workoutService = WorkoutService();
+  final WorkoutTemplateService _templateService = WorkoutTemplateService();
   List<WorkoutTemplate> _templates = [];
   bool _isLoading = true;
 
@@ -28,205 +24,318 @@ class _WorkoutTemplatesScreenState extends State<WorkoutTemplatesScreen> {
   Future<void> _loadTemplates() async {
     setState(() => _isLoading = true);
     try {
-      final userData = context.read<UserProvider>().userData;
-      if (userData != null) {
-        final templates =
-            await _workoutService.getUserWorkoutTemplates(userData['id']);
-        if (mounted) {
-          setState(() {
-            _templates = templates;
-            _isLoading = false;
-          });
-        }
-      }
+      final templates = await _templateService.getUserTemplates();
+      setState(() {
+        _templates = templates;
+        _isLoading = false;
+      });
     } catch (e) {
+      setState(() => _isLoading = false);
       if (mounted) {
-        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading templates: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Styles.errorColor,
+            backgroundColor: Colors.red,
           ),
         );
       }
     }
   }
 
-  Future<void> _navigateToEditScreen([WorkoutTemplate? template]) async {
-    final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditWorkoutTemplateScreen(template: template),
+  void _showTemplateDetails(WorkoutTemplate template) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Styles.primaryColor,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      template.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    if (template.description.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        template.description,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: template.exercises.length,
+                itemBuilder: (context, index) {
+                  final exercise = template.exercises[index];
+                  return ExpansionTile(
+                    title: Text(
+                      _capitalizeWords(exercise.name),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '${exercise.sets} sets × ${exercise.reps} reps'
+                      '${exercise.weight != null ? ' @ ${exercise.weight}kg' : ''}',
+                    ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildInfoRow(
+                                Icons.track_changes, 'Target', exercise.target),
+                            const SizedBox(height: 8),
+                            _buildInfoRow(Icons.accessibility_new, 'Body Part',
+                                exercise.bodyPart),
+                            const SizedBox(height: 8),
+                            _buildInfoRow(Icons.fitness_center, 'Equipment',
+                                exercise.equipment),
+                            if (exercise.notes != null) ...[
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Notes:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(exercise.notes!),
+                            ],
+                            const SizedBox(height: 16),
+                            Image.network(
+                              exercise.gifUrl,
+                              height: 200,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.error_outline,
+                                  size: 50,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => _deleteTemplate(template),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Delete Template'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteTemplate(WorkoutTemplate template) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Template'),
+        content: Text('Are you sure you want to delete "${template.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
 
-    if (result == true) {
-      _loadTemplates();
+    if (confirmed == true && mounted) {
+      try {
+        await _templateService.deleteTemplate(template.id);
+        Navigator.pop(context); // Close template details
+        _loadTemplates(); // Refresh the list
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Template deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting template: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[600]),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            _capitalizeWords(value),
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _capitalizeWords(String text) {
+    if (text.isEmpty) return text;
+    return text.split(' ').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workout Templates'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _navigateToEditScreen(),
-          ),
-        ],
+        title: const Text(
+          'My Workout Templates',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _templates.isEmpty
-              ? _buildEmptyState()
-              : _buildTemplatesList(),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.fitness_center,
-            size: 64,
-            color: Styles.subtleText,
-          ),
-          const SizedBox(height: AppConstants.defaultPadding),
-          Text(
-            'No Workout Templates',
-            style: Styles.headingStyle,
-          ),
-          const SizedBox(height: AppConstants.smallPadding),
-          Text(
-            'Create your first workout template',
-            style: Styles.bodyStyle.copyWith(color: Styles.subtleText),
-          ),
-          const SizedBox(height: AppConstants.defaultPadding),
-          ElevatedButton.icon(
-            onPressed: () => _navigateToEditScreen(),
-            icon: const Icon(Icons.add),
-            label: const Text('Create Template'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Styles.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.defaultPadding,
-                vertical: AppConstants.smallPadding,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTemplatesList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
-      itemCount: _templates.length,
-      itemBuilder: (context, index) {
-        final template = _templates[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: AppConstants.defaultPadding),
-          child: InkWell(
-            onTap: () => _navigateToEditScreen(template),
-            borderRadius:
-                BorderRadius.circular(AppConstants.defaultBorderRadius),
-            child: Padding(
-              padding: const EdgeInsets.all(AppConstants.defaultPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          template.name,
-                          style: Styles.subheadingStyle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      Icon(
+                        Icons.fitness_center,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No workout templates yet',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[400],
                         ),
                       ),
-                      Text(
-                        '${template.estimatedDuration} min',
-                        style:
-                            Styles.bodyStyle.copyWith(color: Styles.subtleText),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // Navigate to exercise library
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Create Template'),
                       ),
                     ],
                   ),
-                  if (template.description.isNotEmpty) ...[
-                    const SizedBox(height: AppConstants.smallPadding),
-                    Text(
-                      template.description,
-                      style:
-                          Styles.bodyStyle.copyWith(color: Styles.subtleText),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: AppConstants.defaultPadding),
-                  Row(
-                    children: [
-                      _buildExerciseCount(template),
-                      const SizedBox(width: AppConstants.defaultPadding),
-                      _buildMuscleGroups(template),
-                    ],
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadTemplates,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: _templates.length,
+                    itemBuilder: (context, index) {
+                      final template = _templates[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 8.0,
+                          vertical: 4.0,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          title: Text(
+                            template.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (template.description.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(template.description),
+                              ],
+                              const SizedBox(height: 8),
+                              Text(
+                                '${template.exercises.length} exercise${template.exercises.length == 1 ? '' : 's'}',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                          onTap: () => _showTemplateDetails(template),
+                        ),
+                      );
+                    },
                   ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildExerciseCount(WorkoutTemplate template) {
-    return Row(
-      children: [
-        const Icon(Icons.fitness_center, size: 16),
-        const SizedBox(width: 4),
-        Text(
-          '${template.exercises.length} exercises',
-          style: Styles.bodyStyle.copyWith(
-            color: Styles.subtleText,
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMuscleGroups(WorkoutTemplate template) {
-    // Get unique categories from exercises
-    final categories = template.exercises
-        .map((e) => ExerciseCategory.values.firstWhere(
-              (cat) =>
-                  cat.toString().split('.').last == e.exerciseId.split('_')[0],
-              orElse: () => ExerciseCategory.other,
-            ))
-        .toSet();
-
-    return Row(
-      children: [
-        const Icon(Icons.sports_gymnastics, size: 16),
-        const SizedBox(width: 4),
-        Text(
-          categories.map((e) => e.toString().split('.').last).join(', '),
-          style: Styles.bodyStyle.copyWith(
-            color: Styles.subtleText,
-            fontSize: 12,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
+                ),
     );
   }
 }

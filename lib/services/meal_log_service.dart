@@ -2,8 +2,11 @@ import 'package:gymw3dlat/models/meal_log_model.dart';
 import 'package:gymw3dlat/models/food_model.dart';
 import 'package:gymw3dlat/services/supabase_service.dart';
 import 'package:gymw3dlat/constants/app_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MealLogService {
+  final _supabase = SupabaseService.client;
+
   // Add a new meal log
   Future<MealLog> addMealLog(MealLog mealLog) async {
     final response = await SupabaseService.client
@@ -23,43 +26,97 @@ class MealLogService {
     return MealLog.fromJson(response, food: food);
   }
 
-  // Get meal logs for a specific date
-  Future<List<MealLog>> getMealLogsByDate(DateTime date) async {
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+  Future<List<MealLog>> getMealLogsForDate(DateTime date) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
 
-    final response = await SupabaseService.client
-        .from('meal_logs')
-        .select()
-        .gte('logged_at', startOfDay.toIso8601String())
-        .lt('logged_at', endOfDay.toIso8601String())
-        .order('logged_at');
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    // Fetch all associated foods
-    final foodIds =
-        (response as List).map((log) => log['food_id'] as String).toSet();
-    final foodsResponse = await SupabaseService.client
-        .from(AppConstants.nutritionCollection)
-        .select()
-        .inFilter('id', foodIds.toList());
+      final response = await _supabase
+          .from('meal_logs')
+          .select('*, foods(*)')
+          .eq('user_id', userId)
+          .gte('logged_at', startOfDay.toIso8601String())
+          .lt('logged_at', endOfDay.toIso8601String())
+          .order('logged_at');
 
-    final foods = Map.fromEntries(
-      (foodsResponse as List)
-          .map((json) => Food.fromJson(json))
-          .map((food) => MapEntry(food.id, food)),
-    );
+      return response.map((json) {
+        final foodJson = json['foods'] as Map<String, dynamic>;
+        final food = Food.fromJson(foodJson);
+        return MealLog.fromJson(json, food: food);
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to get meal logs: $e');
+    }
+  }
 
-    return response
-        .map((json) => MealLog.fromJson(
-              json,
-              food: foods[json['food_id']]!,
-            ))
-        .toList();
+  Future<List<MealLog>> getMealLogsForDateRange(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final startOfDay =
+          DateTime(startDate.year, startDate.month, startDate.day);
+      final endOfDay = DateTime(endDate.year, endDate.month, endDate.day)
+          .add(const Duration(days: 1));
+
+      final response = await _supabase
+          .from('meal_logs')
+          .select('*, foods(*)')
+          .eq('user_id', userId)
+          .gte('logged_at', startOfDay.toIso8601String())
+          .lt('logged_at', endOfDay.toIso8601String())
+          .order('logged_at');
+
+      return response.map((json) {
+        final foodJson = json['foods'] as Map<String, dynamic>;
+        final food = Food.fromJson(foodJson);
+        return MealLog.fromJson(json, food: food);
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to get meal logs: $e');
+    }
+  }
+
+  Future<Map<String, double>> getNutritionSummaryForDate(DateTime date) async {
+    try {
+      final mealLogs = await getMealLogsForDate(date);
+
+      double totalCalories = 0;
+      double totalProtein = 0;
+      double totalCarbs = 0;
+      double totalFat = 0;
+
+      for (final log in mealLogs) {
+        totalCalories += log.calories;
+        totalProtein += log.protein;
+        totalCarbs += log.carbs;
+        totalFat += log.fat;
+      }
+
+      return {
+        'calories': totalCalories,
+        'protein': totalProtein,
+        'carbs': totalCarbs,
+        'fat': totalFat,
+      };
+    } catch (e) {
+      throw Exception('Failed to get nutrition summary: $e');
+    }
   }
 
   // Get nutrition summary for a specific date
   Future<NutritionSummary> getNutritionSummary(DateTime date) async {
-    final logs = await getMealLogsByDate(date);
+    final logs = await getMealLogsForDate(date);
 
     double totalCalories = 0;
     double totalProtein = 0;

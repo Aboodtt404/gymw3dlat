@@ -1,17 +1,40 @@
 import 'package:flutter/material.dart';
-import '../constants/app_constants.dart';
 
 class Styles {
-  // Color Scheme
-  static const Color primaryColor = Color(0xFF6C63FF); // Modern purple
-  static const Color accentColor = Color(0xFF00BFA6); // Teal accent
-  static const Color darkBackground = Color(0xFF1A1A2E); // Dark blue background
-  static const Color cardBackground =
-      Color(0xFF242438); // Slightly lighter dark blue
-  static const Color textColor = Color(0xFFF7F7F7); // Off-white text
-  static const Color subtleText = Color(0xFFB8B8B8); // Subtle gray text
-  static const Color errorColor = Color(0xFFFF6B6B); // Soft red for errors
-  static const Color successColor = Color(0xFF4CAF50); // Material green
+  // Primary colors
+  static const primaryColor = Color(0xFF6200EE);
+  static const primaryVariantColor = Color(0xFF3700B3);
+  static const secondaryColor = Color(0xFF03DAC6);
+  static const secondaryVariantColor = Color(0xFF018786);
+  static const accentColor = Color(0xFF00BFA6);
+
+  // Background colors
+  static const backgroundColor = Color(0xFFF5F5F5);
+  static const darkBackground = Color(0xFF121212);
+  static const surfaceColor = Colors.white;
+  static const darkSurfaceColor = Color(0xFF1E1E1E);
+  static const cardBackground = Color(0xFF242438);
+
+  // Text colors
+  static const primaryText = Color(0xFF000000);
+  static const secondaryText = Color(0xFF666666);
+  static const subtleText = Color(0xFF999999);
+  static const onPrimaryText = Colors.white;
+  static const textColor = Color(0xFFF7F7F7);
+
+  // Status colors
+  static const successColor = Color(0xFF4CAF50);
+  static const warningColor = Color(0xFFFFC107);
+  static const errorColor = Color(0xFFFF6B6B);
+
+  // Nutrition colors
+  static const proteinColor = Color(0xFF4CAF50);
+  static const carbsColor = Color(0xFFFFA726);
+  static const fatColor = Color(0xFFEF5350);
+
+  // Dimensions
+  static const double cardElevation = 2.0;
+  static const double buttonElevation = 4.0;
 
   // Gradients
   static LinearGradient primaryGradient = LinearGradient(

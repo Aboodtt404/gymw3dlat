@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+
+@immutable
 class Food {
   final String id;
   final String name;
@@ -8,10 +11,11 @@ class Food {
   final double servingSize;
   final String servingUnit;
   final String? brand;
-  final DateTime createdAt;
+  final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? mealLogId;
 
-  Food({
+  const Food({
     required this.id,
     required this.name,
     required this.calories,
@@ -21,25 +25,38 @@ class Food {
     required this.servingSize,
     required this.servingUnit,
     this.brand,
-    required this.createdAt,
+    this.createdAt,
     this.updatedAt,
+    this.mealLogId,
   });
 
-  factory Food.fromJson(Map<String, dynamic> json) {
+  Food copyWith({
+    String? id,
+    String? name,
+    double? calories,
+    double? protein,
+    double? carbs,
+    double? fat,
+    double? servingSize,
+    String? servingUnit,
+    String? brand,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? mealLogId,
+  }) {
     return Food(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      calories: (json['calories'] as num).toDouble(),
-      protein: (json['protein'] as num).toDouble(),
-      carbs: (json['carbs'] as num).toDouble(),
-      fat: (json['fat'] as num).toDouble(),
-      servingSize: (json['serving_size'] as num).toDouble(),
-      servingUnit: json['serving_unit'] as String,
-      brand: json['brand'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
-          : null,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      calories: calories ?? this.calories,
+      protein: protein ?? this.protein,
+      carbs: carbs ?? this.carbs,
+      fat: fat ?? this.fat,
+      servingSize: servingSize ?? this.servingSize,
+      servingUnit: servingUnit ?? this.servingUnit,
+      brand: brand ?? this.brand,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      mealLogId: mealLogId ?? this.mealLogId,
     );
   }
 
@@ -54,36 +71,61 @@ class Food {
       'serving_size': servingSize,
       'serving_unit': servingUnit,
       'brand': brand,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      'meal_log_id': mealLogId,
     };
   }
 
-  Food copyWith({
-    String? id,
-    String? name,
-    double? calories,
-    double? protein,
-    double? carbs,
-    double? fat,
-    double? servingSize,
-    String? servingUnit,
-    String? brand,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
+  factory Food.fromJson(Map<String, dynamic> json) {
     return Food(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      calories: calories ?? this.calories,
-      protein: protein ?? this.protein,
-      carbs: carbs ?? this.carbs,
-      fat: fat ?? this.fat,
-      servingSize: servingSize ?? this.servingSize,
-      servingUnit: servingUnit ?? this.servingUnit,
-      brand: brand ?? this.brand,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      id: json['id'] as String,
+      name: json['name'] as String,
+      calories: (json['calories'] as num).toDouble(),
+      protein: (json['protein'] as num).toDouble(),
+      carbs: (json['carbs'] as num).toDouble(),
+      fat: (json['fat'] as num).toDouble(),
+      servingSize: (json['serving_size'] as num).toDouble(),
+      servingUnit: json['serving_unit'] as String,
+      brand: json['brand'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
+      mealLogId: json['meal_log_id'] as String?,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Food &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          calories == other.calories &&
+          protein == other.protein &&
+          carbs == other.carbs &&
+          fat == other.fat &&
+          servingSize == other.servingSize &&
+          servingUnit == other.servingUnit &&
+          createdAt == other.createdAt &&
+          updatedAt == other.updatedAt &&
+          mealLogId == other.mealLogId;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      calories.hashCode ^
+      protein.hashCode ^
+      carbs.hashCode ^
+      fat.hashCode ^
+      servingSize.hashCode ^
+      servingUnit.hashCode ^
+      createdAt.hashCode ^
+      updatedAt.hashCode ^
+      mealLogId.hashCode;
 }
