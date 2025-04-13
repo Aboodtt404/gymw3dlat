@@ -79,10 +79,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 
-For any inquiries, please reach out to [your-email@domain.com]
-
-## Acknowledgments
-
-- Flutter Team for the amazing framework
-- Firebase for backend services
-- All contributors who participate in this project
+For any inquiries, please reach out to [abdelrahmansat2003@gmail.com]
