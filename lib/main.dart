@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'GymW3dlat',
         theme: Styles.darkTheme(),
         home: const AuthWrapper(),
