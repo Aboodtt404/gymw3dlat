@@ -58,12 +58,7 @@ cd gymw3dlat
 flutter pub get
 ```
 
-3. Configure Firebase
-
-- Add your `google-services.json` for Android
-- Add your `GoogleService-Info.plist` for iOS (under implementation)
-
-4. Run the app
+3. Run the app
 
 ```bash
 flutter run
