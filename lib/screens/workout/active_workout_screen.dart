@@ -7,6 +7,8 @@ import 'package:gymw3dlat/utils/styles.dart';
 import 'package:provider/provider.dart';
 import 'package:gymw3dlat/providers/user_provider.dart';
 import 'package:uuid/uuid.dart';
+import '../../services/voice_command_service.dart';
+import '../../widgets/voice_command_button.dart';
 
 class ActiveWorkoutScreen extends StatefulWidget {
   final WorkoutTemplate? template;
@@ -29,6 +31,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   Duration _elapsed = Duration.zero;
   bool _isPaused = false;
   DateTime? _pauseTime;
+  final _voiceCommandService = VoiceCommandService();
+  bool _isListening = false;
 
   @override
   void initState() {
@@ -196,6 +200,90 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     }
   }
 
+  void _handleVoiceCommand(String command) {
+    // Try to parse as a set command first
+    final setData = _voiceCommandService.parseSetCommand(command);
+    if (setData != null) {
+      _handleSetCommand(setData);
+      return;
+    }
+
+    // Try to parse as an exercise command
+    final exerciseData = _voiceCommandService.parseExerciseCommand(command);
+    if (exerciseData != null) {
+      _handleExerciseCommand(exerciseData);
+      return;
+    }
+
+    // Show error if command not recognized
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Command not recognized. Please try again.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _handleSetCommand(Map<String, dynamic> data) {
+    final reps = data['reps'] as int;
+    final weight = data['weight'] as double?;
+    final unit = data['unit'] as String?;
+
+    // TODO: Add set to current exercise
+    setState(() {
+      // Update your workout state here
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          weight != null
+              ? 'Logged set: $reps reps at $weight $unit'
+              : 'Logged set: $reps reps (bodyweight)',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _handleExerciseCommand(Map<String, dynamic> data) {
+    final exercise = data['exercise'] as String;
+
+    // TODO: Switch to or start new exercise
+    setState(() {
+      // Update your workout state here
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Switched to exercise: $exercise'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_isListening) {
+      try {
+        await _voiceCommandService.startListening(
+          onResult: _handleVoiceCommand,
+          onComplete: () => setState(() => _isListening = false),
+        );
+        setState(() => _isListening = true);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error starting voice recognition: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } else {
+      await _voiceCommandService.stopListening();
+      setState(() => _isListening = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_workoutLog.exercises.isEmpty) {
@@ -250,6 +338,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             TextButton(
               onPressed: _finishWorkout,
               child: const Text('Finish'),
+            ),
+            VoiceCommandButton(
+              isListening: _isListening,
+              onPressed: _toggleListening,
             ),
           ],
         ),

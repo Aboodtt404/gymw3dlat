@@ -10,48 +10,40 @@ class VoiceCommandService {
   bool _isInitialized = false;
 
   Future<bool> initialize() async {
-    if (_isInitialized) return true;
-    _isInitialized = await _speech.initialize(
-      onError: (error) => debugPrint('Speech recognition error: $error'),
-      onStatus: (status) => debugPrint('Speech recognition status: $status'),
-    );
+    if (!_isInitialized) {
+      _isInitialized = await _speech.initialize(
+        onError: (error) => debugPrint('Speech recognition error: $error'),
+        onStatus: (status) => debugPrint('Speech recognition status: $status'),
+      );
+    }
     return _isInitialized;
   }
 
-  Future<String?> startListening({
-    Duration timeout = const Duration(seconds: 30),
-    String? prompt,
+  Future<void> startListening({
+    required Function(String) onResult,
+    required Function() onComplete,
   }) async {
     if (!_isInitialized) {
       final initialized = await initialize();
-      if (!initialized) return null;
+      if (!initialized) {
+        throw Exception('Failed to initialize speech recognition');
+      }
     }
-
-    if (_speech.isListening) return null;
-
-    final completer = Completer<String?>();
 
     await _speech.listen(
       onResult: (result) {
         if (result.finalResult) {
-          completer.complete(result.recognizedWords);
+          final text = result.recognizedWords.toLowerCase();
+          onResult(text);
+          onComplete();
         }
       },
+      listenFor: const Duration(seconds: 30),
+      pauseFor: const Duration(seconds: 3),
+      partialResults: false,
       cancelOnError: true,
       listenMode: stt.ListenMode.confirmation,
-      partialResults: false,
-      listenFor: timeout,
     );
-
-    // Add timeout
-    Timer(timeout, () {
-      if (!completer.isCompleted) {
-        _speech.stop();
-        completer.complete(null);
-      }
-    });
-
-    return completer.future;
   }
 
   Future<void> stopListening() async {
@@ -63,46 +55,57 @@ class VoiceCommandService {
   // Parse voice command for sets
   Map<String, dynamic>? parseSetCommand(String command) {
     // Common patterns:
-    // "10 reps at 100 pounds"
-    // "10 reps 100 pounds"
-    // "10 at 100"
-    // "10 reps"
-    // "100 pounds 10 times"
+    // "log set 12 reps at 100 pounds"
+    // "record 10 reps with 45 kilos"
+    // "add set 8 reps 60 kg"
 
-    final RegExp repsPattern = RegExp(r'(\d+)(?:\s*reps?|\s*times?)?');
-    final RegExp weightPattern =
-        RegExp(r'(\d+)(?:\s*(?:pounds?|lbs?|kilos?|kgs?))');
+    final RegExp repsPattern = RegExp(r'(\d+)\s*reps?');
+    final RegExp weightPattern = RegExp(r'(\d+)\s*(pounds?|lbs?|kilos?|kg)');
 
-    final repsMatch = repsPattern.firstMatch(command.toLowerCase());
-    final weightMatch = weightPattern.firstMatch(command.toLowerCase());
+    final repsMatch = repsPattern.firstMatch(command);
+    final weightMatch = weightPattern.firstMatch(command);
 
     if (repsMatch == null) return null;
 
+    final reps = int.parse(repsMatch.group(1)!);
+    double? weight;
+    String? unit;
+
+    if (weightMatch != null) {
+      weight = double.parse(weightMatch.group(1)!);
+      unit = weightMatch.group(2);
+
+      // Standardize unit to kg if pounds/lbs
+      if (unit!.startsWith('p') || unit.startsWith('l')) {
+        weight = weight * 0.453592; // Convert pounds to kg
+        unit = 'kg';
+      } else {
+        unit = 'kg';
+      }
+    }
+
     return {
-      'reps': int.parse(repsMatch.group(1)!),
-      'weight':
-          weightMatch != null ? double.parse(weightMatch.group(1)!) : null,
+      'reps': reps,
+      'weight': weight,
+      'unit': unit,
     };
   }
 
   // Parse voice command for exercises
   Map<String, dynamic>? parseExerciseCommand(String command) {
     // Common patterns:
-    // "add bench press"
     // "start bench press"
-    // "begin bench press"
-    // "new exercise bench press"
+    // "begin squats"
+    // "switch to deadlift"
 
-    final RegExp startPattern = RegExp(
-      r'^(?:add|start|begin|new exercise)\s+(.+)$',
-      caseSensitive: false,
-    );
+    final RegExp startPattern = RegExp(r'(start|begin|switch to)\s+(.+)');
+    final match = startPattern.firstMatch(command);
 
-    final match = startPattern.firstMatch(command.toLowerCase());
     if (match == null) return null;
 
     return {
-      'exerciseName': match.group(1)?.trim(),
+      'action': match.group(1),
+      'exercise': match.group(2),
     };
   }
 }
