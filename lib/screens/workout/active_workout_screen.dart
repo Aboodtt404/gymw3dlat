@@ -27,12 +27,21 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   DateTime? _startTime;
   Timer? _timer;
   Duration _elapsed = Duration.zero;
+  bool _isPaused = false;
+  DateTime? _pauseTime;
 
   @override
   void initState() {
     super.initState();
-    _initializeWorkout();
     _startTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isLoading) {
+      _initializeWorkout();
+    }
   }
 
   @override
@@ -44,8 +53,13 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
 
   void _startTimer() {
     _startTime = DateTime.now();
+    if (_pauseTime != null) {
+      // Adjust start time to account for paused duration
+      _startTime = _startTime!.subtract(_elapsed);
+      _pauseTime = null;
+    }
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
+      if (mounted && !_isPaused) {
         setState(() {
           _elapsed = DateTime.now().difference(_startTime!);
         });
@@ -53,38 +67,74 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     });
   }
 
-  void _initializeWorkout() {
-    final userData = context.read<UserProvider>().userData;
-    if (userData == null) {
-      throw Exception('User not logged in');
-    }
+  void _pauseTimer() {
+    setState(() {
+      _isPaused = true;
+      _pauseTime = DateTime.now();
+      _timer?.cancel();
+    });
+  }
 
-    final exercises = widget.template?.exercises.map((e) {
-          return ExerciseLog(
-            exerciseId: e.exerciseId,
-            name: e.exerciseId, // TODO: Get actual exercise name
-            sets: List.generate(
-              e.sets,
-              (i) => SetLog(
-                setNumber: i + 1,
-                reps: e.reps,
-                weight: e.weight,
-                completed: false,
-              ),
+  void _resumeTimer() {
+    setState(() {
+      _isPaused = false;
+      _startTimer();
+    });
+  }
+
+  void _initializeWorkout() {
+    try {
+      final userData = context.read<UserProvider>().userData;
+      if (userData == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please log in to start a workout'),
+              backgroundColor: Styles.errorColor,
             ),
           );
-        }).toList() ??
-        [];
+          Navigator.pop(context);
+        }
+        return;
+      }
 
-    _workoutLog = WorkoutLog(
-      id: const Uuid().v4(),
-      userId: userData['id'],
-      templateId: widget.template?.id,
-      name: widget.template?.name ?? 'Quick Workout',
-      exercises: exercises,
-      startTime: DateTime.now(),
-      createdAt: DateTime.now(),
-    );
+      final exercises = widget.template?.exercises.map((e) {
+            return ExerciseLog(
+              exerciseId: e.exerciseId,
+              name: e.exerciseId,
+              sets: List.generate(
+                e.sets,
+                (index) => SetLog(
+                  setNumber: index + 1,
+                  reps: e.reps,
+                  weight: e.weight,
+                  completed: false,
+                ),
+              ),
+            );
+          }).toList() ??
+          [];
+
+      _workoutLog = WorkoutLog(
+        id: const Uuid().v4(),
+        userId: userData['auth_id'],
+        templateId: widget.template?.id,
+        name: widget.template?.name ?? 'Quick Workout',
+        exercises: exercises,
+        startTime: DateTime.now(),
+        createdAt: DateTime.now(),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error initializing workout: $e'),
+            backgroundColor: Styles.errorColor,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    }
   }
 
   Future<void> _completeSet(bool completed) async {
@@ -148,6 +198,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_workoutLog.exercises.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final currentExercise = _workoutLog.exercises[_currentExerciseIndex];
     final currentSet = currentExercise.sets[_currentSetIndex];
     final isLastSet = _currentSetIndex == currentExercise.sets.length - 1;
@@ -179,6 +237,16 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         appBar: AppBar(
           title: Text(_workoutLog.name),
           actions: [
+            IconButton(
+              icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
+              onPressed: () {
+                if (_isPaused) {
+                  _resumeTimer();
+                } else {
+                  _pauseTimer();
+                }
+              },
+            ),
             TextButton(
               onPressed: _finishWorkout,
               child: const Text('Finish'),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../utils/styles.dart';
 import 'home/home_screen.dart';
-import 'nutrition/meal_log_screen.dart';
 import 'profile/profile_screen.dart';
 import 'workout/workout_screen.dart';
+import 'nutrition/nutrition_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -17,7 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const WorkoutScreen(),
-    const MealLogScreen(),
+    const NutritionScreen(),
     const ProfileScreen(),
   ];
 

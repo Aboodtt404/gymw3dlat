@@ -21,6 +21,7 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
   final _restController = TextEditingController(
     text: AppConstants.defaultRestBetweenSets.toString(),
   );
+  final _notesController = TextEditingController();
 
   List<Exercise> _exercises = [];
   Exercise? _selectedExercise;
@@ -40,6 +41,7 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
     _repsController.dispose();
     _weightController.dispose();
     _restController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -93,17 +95,37 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
   }
 
   void _addExercise() {
-    if (_selectedExercise == null) return;
+    if (_selectedExercise == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an exercise first'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Styles.errorColor,
+        ),
+      );
+      return;
+    }
 
     final sets = int.tryParse(_setsController.text);
     final reps = int.tryParse(_repsController.text);
     final weight = double.tryParse(_weightController.text);
     final rest = int.tryParse(_restController.text);
 
-    if (sets == null || reps == null) {
+    String? errorMessage;
+    if (sets == null || sets <= 0) {
+      errorMessage = 'Please enter a valid number of sets (greater than 0)';
+    } else if (reps == null || reps <= 0) {
+      errorMessage = 'Please enter a valid number of reps (greater than 0)';
+    } else if (weight != null && weight < 0) {
+      errorMessage = 'Weight cannot be negative';
+    } else if (rest != null && (rest < 0 || rest > 600)) {
+      errorMessage = 'Rest period must be between 0 and 600 seconds';
+    }
+
+    if (errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter valid sets and reps'),
+        SnackBar(
+          content: Text(errorMessage),
           behavior: SnackBarBehavior.floating,
           backgroundColor: Styles.errorColor,
         ),
@@ -113,10 +135,11 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
 
     final exerciseSet = ExerciseSet(
       exerciseId: _selectedExercise!.id,
-      sets: sets,
-      reps: reps,
+      sets: sets!,
+      reps: reps!,
       weight: weight,
-      restTime: rest,
+      restTime: rest ?? 60, // Default rest period of 60 seconds
+      notes: _notesController.text.trim(),
     );
 
     Navigator.pop(context, exerciseSet);

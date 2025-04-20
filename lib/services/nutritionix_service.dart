@@ -12,33 +12,54 @@ class NutritionixService {
   final Map<String, String> _headers = {
     'x-app-id': _appId,
     'x-app-key': _apiKey,
+    'x-remote-user-id': '0', // Required by Nutritionix API
     'Content-Type': 'application/json',
   };
 
+  // Validate API credentials
+  bool get isConfigured => _appId.isNotEmpty && _apiKey.isNotEmpty;
+
   // Search for foods using natural language
-  Future<List<Map<String, dynamic>>> searchFoods(String query) async {
+  Future<List<Food>> searchFoods(String query) async {
+    if (!isConfigured) {
+      throw Exception('Nutritionix API credentials not configured');
+    }
+
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/natural/nutrients'),
         headers: _headers,
         body: json.encode({
           'query': query,
+          'line_delimited': false,
         }),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return List<Map<String, dynamic>>.from(data['foods']);
+        if (data['foods'] == null) {
+          return [];
+        }
+        final foods = List<Map<String, dynamic>>.from(data['foods']);
+        return foods.map((food) => _convertToFood(food)).toList();
+      } else if (response.statusCode == 404) {
+        return [];
       } else {
+        print('Nutritionix API Error: ${response.body}');
         throw Exception('Failed to search foods: ${response.statusCode}');
       }
     } catch (e) {
+      print('Error searching foods: $e');
       throw Exception('Failed to search foods: $e');
     }
   }
 
-  // Search food items by keyword
+  // Search food items by keyword with detailed nutrition info
   Future<List<Food>> searchInstant(String query) async {
+    if (!isConfigured) {
+      throw Exception('Nutritionix API credentials not configured');
+    }
+
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/search/instant?query=$query'),
@@ -49,50 +70,70 @@ class NutritionixService {
         final data = json.decode(response.body);
         final List<dynamic> commonFoods = data['common'] ?? [];
         final List<dynamic> brandedFoods = data['branded'] ?? [];
-
         final foods = [...commonFoods, ...brandedFoods];
-        return foods.map((item) => _convertToFood(item)).toList();
+
+        // For each food item, get detailed nutrition info
+        List<Food> detailedFoods = [];
+        for (var food in foods.take(5)) {
+          try {
+            final detailedFood = await _getDetailedNutrition(food);
+            if (detailedFood != null) {
+              detailedFoods.add(detailedFood);
+            }
+          } catch (e) {
+            print(
+                'Error getting detailed nutrition for ${food['food_name']}: $e');
+          }
+        }
+
+        return detailedFoods;
       } else {
+        print('Nutritionix API Error: ${response.body}');
         throw Exception('Failed to search foods: ${response.statusCode}');
       }
     } catch (e) {
+      print('Error searching foods: $e');
       throw Exception('Failed to search foods: $e');
     }
   }
 
-  // Get detailed nutrition information for a food item
-  Future<Food> getNutritionInfo(String nixItemId) async {
+  Future<Food?> _getDetailedNutrition(Map<String, dynamic> foodItem) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/search/item?nix_item_id=$nixItemId'),
+      final response = await http.post(
+        Uri.parse('$_baseUrl/natural/nutrients'),
         headers: _headers,
+        body: json.encode({
+          'query': foodItem['food_name'] ?? foodItem['item_name'],
+        }),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final foodData = data['foods'][0];
-        return _convertToFood(foodData);
+        if (data['foods']?.isNotEmpty) {
+          return _convertToFood(data['foods'][0]);
+        }
       } else {
-        throw Exception('Failed to get nutrition info: ${response.statusCode}');
+        print('Nutritionix API Error: ${response.body}');
       }
+      return null;
     } catch (e) {
-      throw Exception('Failed to get nutrition info: $e');
+      print('Error in _getDetailedNutrition: $e');
+      return null;
     }
   }
 
   Food _convertToFood(Map<String, dynamic> data) {
-    // Get full nutrition data if available, otherwise use the basic data
-    final nutritionData = data['full_nutrients'] ?? {};
+    // Print the raw data for debugging
+    print('Raw food data: $data');
 
     return Food(
       id: data['nix_item_id'] ?? const Uuid().v4(),
       name: data['food_name'] ?? data['item_name'] ?? '',
       brand: data['brand_name'],
-      calories: (data['nf_calories'] ?? data['calories'] ?? 0).toDouble(),
-      protein: (data['nf_protein'] ?? nutritionData[203] ?? 0).toDouble(),
-      carbs:
-          (data['nf_total_carbohydrate'] ?? nutritionData[205] ?? 0).toDouble(),
-      fat: (data['nf_total_fat'] ?? nutritionData[204] ?? 0).toDouble(),
+      calories: (data['nf_calories'] ?? 0).toDouble(),
+      protein: (data['nf_protein'] ?? 0).toDouble(),
+      carbs: (data['nf_total_carbohydrate'] ?? 0).toDouble(),
+      fat: (data['nf_total_fat'] ?? 0).toDouble(),
       servingSize:
           (data['serving_qty'] ?? data['serving_weight_grams'] ?? 1).toDouble(),
       servingUnit: data['serving_unit'] ?? 'g',

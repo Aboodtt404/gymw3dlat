@@ -10,44 +10,15 @@ class FoodService {
 
   Future<List<Food>> searchFoods(String query) async {
     try {
+      // Check if user is authenticated
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
         throw Exception('User not authenticated');
       }
 
-      // First, search in local database and left join with meal_logs to get meal_log_id if it exists
-      final localResponse = await _supabase
-          .from('foods')
-          .select('''
-            *,
-            meal_logs!left (
-              id,
-              user_id
-            )
-          ''')
-          .textSearch('name', query)
-          .or('meal_logs.is.null,meal_logs.user_id.eq.$userId')
-          .order('name')
-          .limit(20);
-
-      final localFoods = localResponse
-          .map((json) => Food.fromJson({
-                ...json,
-                'meal_log_id': json['meal_logs']?[0]?['id'],
-              }))
-          .toList();
-
-      // If we have enough local results, return them
-      if (localFoods.length >= 10) {
-        return localFoods;
-      }
-
-      // Otherwise, also search in Nutritionix
-      final nutritionixFoods = await _nutritionixService.searchInstant(query);
-
-      // Combine results, removing duplicates based on name
-      final allFoods = {...localFoods, ...nutritionixFoods}.toList();
-      return allFoods.take(20).toList();
+      // Search using Nutritionix API
+      final nutritionixFoods = await _nutritionixService.searchFoods(query);
+      return nutritionixFoods;
     } catch (e) {
       throw Exception('Failed to search foods: $e');
     }
@@ -90,6 +61,7 @@ class FoodService {
         'serving_size': food.servingSize,
         'serving_unit': food.servingUnit,
         'meal_type': mealType.name,
+        'logged_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
       throw Exception('Failed to log food: $e');
@@ -153,9 +125,9 @@ class FoodService {
             foods (*)
           ''')
           .eq('user_id', userId)
-          .gte('created_at',
+          .gte('logged_at',
               DateTime.now().toUtc().subtract(const Duration(days: 1)))
-          .order('created_at');
+          .order('logged_at');
 
       final meals = {
         MealType.breakfast: <Food>[],

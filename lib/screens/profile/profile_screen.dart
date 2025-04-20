@@ -3,6 +3,10 @@ import '../../utils/styles.dart';
 import '../../constants/app_constants.dart';
 import '../../services/supabase_service.dart';
 import '../auth/login_screen.dart';
+import 'package:provider/provider.dart';
+import '../../providers/theme_provider.dart';
+import '../profile/edit_profile_screen.dart';
+import '../profile/notifications_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -68,6 +72,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: Styles.backgroundGradient),
@@ -98,6 +104,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _buildStatsCard(),
                             const SizedBox(height: AppConstants.defaultPadding),
                             _buildSettingsSection(),
+                            const SizedBox(height: AppConstants.defaultPadding),
+                            ListTile(
+                              title: const Text('Dark Mode'),
+                              trailing: Switch(
+                                value: themeProvider.isDarkMode,
+                                onChanged: (_) => themeProvider.toggleTheme(),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -224,7 +238,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: Text('Edit Profile', style: Styles.bodyStyle),
             trailing: const Icon(Icons.chevron_right, color: Styles.subtleText),
             onTap: () {
-              // TODO: Implement edit profile
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditProfileScreen(),
+                ),
+              ).then((_) => _loadUserData());
             },
           ),
           const Divider(color: Styles.cardBackground),
@@ -234,7 +253,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: Text('Notifications', style: Styles.bodyStyle),
             trailing: const Icon(Icons.chevron_right, color: Styles.subtleText),
             onTap: () {
-              // TODO: Implement notifications settings
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
             },
           ),
           const Divider(color: Styles.cardBackground),
