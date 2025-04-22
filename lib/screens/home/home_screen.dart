@@ -7,6 +7,7 @@ import '../../constants/app_constants.dart';
 import '../auth/login_screen.dart';
 import '../workout/active_workout_screen.dart';
 import '../nutrition/nutrition_screen.dart';
+import '../adaptive_plan_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -225,11 +226,19 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Styles.primaryColor.withOpacity(0.1),
+              image: _userData?['photo_url'] != null
+                  ? DecorationImage(
+                      image: NetworkImage(_userData!['photo_url']),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(
-              Icons.person,
-              color: Styles.primaryColor,
-            ),
+            child: _userData?['photo_url'] == null
+                ? const Icon(
+                    Icons.person,
+                    color: Styles.primaryColor,
+                  )
+                : null,
           ),
         ],
       ),
@@ -312,24 +321,23 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         _buildActionCard(
+          icon: Icons.auto_awesome,
+          title: 'AI Plan',
+          color: Colors.purple,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdaptivePlanScreen(),
+              ),
+            );
+          },
+        ),
+        _buildActionCard(
           icon: Icons.water_drop_outlined,
           title: 'Log Water',
           color: Colors.blue,
           onTap: _logWater,
-        ),
-        _buildActionCard(
-          icon: Icons.insights_outlined,
-          title: 'View Stats',
-          color: Colors.purple,
-          onTap: () {
-            // TODO: Implement stats screen
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Stats screen coming soon!'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
         ),
       ],
     );

@@ -249,13 +249,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: shouldNavigateToLogin ? Colors.orange : Colors.red,
+            backgroundColor: Colors.red,
           ),
         );
 
-        // Navigate to login screen if the email is already registered
+        // If user is already registered, navigate to login screen
         if (shouldNavigateToLogin) {
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
@@ -270,7 +269,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

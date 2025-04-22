@@ -1,25 +1,48 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
-import '../models/user.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/user_model.dart';
+import 'dart:typed_data';
 
 /// Provider class that manages user authentication and profile data
 class UserProvider extends ChangeNotifier {
   final SupabaseClient _supabase;
-  User? _user;
+  UserModel? _user;
   bool _isLoading = false;
   String? _error;
 
   UserProvider(this._supabase);
 
   // Getters
-  User? get user => _user;
+  UserModel? get user => _user;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
   String? get error => _error;
 
   // Getter for user data as a Map
   Map<String, dynamic>? get userData => _user?.toJson();
+
+  // Upload profile image to Supabase storage
+  Future<void> uploadProfileImage(String path, Uint8List bytes) async {
+    try {
+      await _supabase.storage.from('avatars').uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(
+              cacheControl: '3600',
+              upsert: true,
+            ),
+          );
+    } catch (e) {
+      debugPrint('Error uploading image: $e');
+      rethrow;
+    }
+  }
+
+  // Get public URL for uploaded image
+  String getPublicUrl(String path) {
+    return _supabase.storage.from('avatars').getPublicUrl(path);
+  }
 
   // Initialize user data on app start
   Future<void> initializeUser() async {
@@ -33,10 +56,13 @@ class UserProvider extends ChangeNotifier {
             .from('users')
             .select()
             .eq('auth_id', session.user.id)
-            .single();
+            .maybeSingle();
 
         if (userData != null) {
-          _user = User.fromJson(Map<String, dynamic>.from(userData));
+          _user = UserModel.fromJson(Map<String, dynamic>.from(userData));
+        } else {
+          // Create user profile if it doesn't exist
+          await _createUserProfile(session.user);
         }
       }
     } catch (e) {
@@ -45,6 +71,32 @@ class UserProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // Create user profile if it doesn't exist
+  Future<void> _createUserProfile(User user) async {
+    try {
+      final now = DateTime.now().toIso8601String();
+      final Map<String, dynamic> userData = {
+        'auth_id': user.id,
+        'email': user.email ?? '',
+        'name':
+            user.userMetadata?['name'] ?? user.email?.split('@')[0] ?? 'User',
+        'photo_url': user.userMetadata?['avatar_url'] ?? null,
+        'created_at': now,
+        'updated_at': now,
+      };
+
+      final insertedData =
+          await _supabase.from('users').insert(userData).select().single();
+
+      if (insertedData != null) {
+        _user = UserModel.fromJson(insertedData);
+      }
+    } catch (e) {
+      debugPrint('Error creating user profile: $e');
+      _error = e.toString();
     }
   }
 
@@ -63,13 +115,14 @@ class UserProvider extends ChangeNotifier {
           .from('users')
           .select()
           .eq('auth_id', session.user.id)
-          .single();
+          .maybeSingle();
 
       if (data == null) {
-        throw Exception('User profile not found');
+        await _createUserProfile(session.user);
+      } else {
+        _user = UserModel.fromJson(data);
       }
 
-      _user = User.fromJson(data);
       notifyListeners();
     } catch (e) {
       _setError(e.toString());
@@ -104,6 +157,7 @@ class UserProvider extends ChangeNotifier {
             if (name != null) 'name': name,
             if (email != null) 'email': email,
             if (photoUrl != null) 'photo_url': photoUrl,
+            'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('auth_id', session.user.id)
           .select()
@@ -113,7 +167,7 @@ class UserProvider extends ChangeNotifier {
         throw Exception('Failed to update user profile');
       }
 
-      _user = User.fromJson(updatedData);
+      _user = UserModel.fromJson(updatedData);
       notifyListeners();
     } catch (e) {
       _setError(e.toString());
@@ -157,13 +211,11 @@ class UserProvider extends ChangeNotifier {
         throw Exception('No active session');
       }
 
-      final userId = session.user.id;
-
       // Delete user data from Supabase
-      await _supabase.from('users').delete().eq('id', userId);
+      await _supabase.from('users').delete().eq('auth_id', session.user.id);
 
       // Delete auth user
-      await _supabase.auth.admin.deleteUser(userId);
+      await _supabase.auth.admin.deleteUser(session.user.id);
 
       _user = null;
       notifyListeners();
@@ -181,6 +233,7 @@ class UserProvider extends ChangeNotifier {
   Future<void> signIn(String email, String password) async {
     try {
       _isLoading = true;
+      _clearError();
       notifyListeners();
 
       final response = await _supabase.auth.signInWithPassword(
@@ -189,22 +242,29 @@ class UserProvider extends ChangeNotifier {
       );
 
       if (response.user != null) {
+        // First try to fetch existing user data
         final userData = await _supabase
             .from('users')
             .select()
-            .eq('id', response.user!.id)
-            .single();
+            .eq('auth_id', response.user!.id)
+            .maybeSingle();
 
         if (userData == null) {
-          throw Exception('User profile not found');
+          // If no user data exists, create a new profile
+          await _createUserProfile(response.user!);
+        } else {
+          // If user data exists, initialize the user model
+          _user = UserModel.fromJson(Map<String, dynamic>.from(userData));
         }
 
-        _user = User.fromJson(Map<String, dynamic>.from(userData));
+        // Clear any previous errors
         _error = null;
+        notifyListeners();
       }
     } catch (e) {
       debugPrint('Error signing in: $e');
       _error = e.toString();
+      notifyListeners();
       rethrow;
     } finally {
       _isLoading = false;
@@ -216,19 +276,22 @@ class UserProvider extends ChangeNotifier {
   Future<void> signUp(String email, String password, String name) async {
     try {
       _isLoading = true;
+      _clearError();
       notifyListeners();
 
-      final response = await _supabase.auth.signUp(
-        email: email,
-        password: password,
-      );
+      final response =
+          await _supabase.auth.signUp(email: email, password: password, data: {
+        'name': name // Store name in user metadata
+      });
 
       if (response.user != null) {
+        // Create user profile with the provided name
         final now = DateTime.now().toIso8601String();
         final Map<String, dynamic> userData = {
           'auth_id': response.user!.id,
-          'email': response.user!.email ?? email,
-          'name': name,
+          'email': email,
+          'name': name, // Use provided name instead of email
+          'photo_url': null,
           'created_at': now,
           'updated_at': now,
         };
@@ -236,16 +299,17 @@ class UserProvider extends ChangeNotifier {
         final insertedData =
             await _supabase.from('users').insert(userData).select().single();
 
-        if (insertedData == null) {
-          throw Exception('Failed to create user profile');
+        if (insertedData != null) {
+          _user = UserModel.fromJson(insertedData);
+          notifyListeners();
         }
 
-        _user = User.fromJson(insertedData);
         _error = null;
       }
     } catch (e) {
       debugPrint('Error signing up: $e');
       _error = e.toString();
+      notifyListeners();
       rethrow;
     } finally {
       _isLoading = false;
@@ -261,6 +325,16 @@ class UserProvider extends ChangeNotifier {
 
   void _clearError() {
     _error = null;
+    notifyListeners();
+  }
+
+  void setUser(UserModel user) {
+    _user = user;
+    notifyListeners();
+  }
+
+  void clearUser() {
+    _user = null;
     notifyListeners();
   }
 }

@@ -57,7 +57,7 @@ class _EditWorkoutTemplateScreenState extends State<EditWorkoutTemplateScreen> {
       }
 
       final template = WorkoutTemplate(
-        id: widget.template?.id ?? const Uuid().v4(),
+        id: widget.template?.id ?? Uuid().v4(),
         userId: userData['id'],
         name: _nameController.text,
         description: _descriptionController.text,

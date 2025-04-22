@@ -4,6 +4,7 @@ import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
 import 'workout/workout_screen.dart';
 import 'nutrition/nutrition_screen.dart';
+import 'adaptive_plan_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,6 +19,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const WorkoutScreen(),
     const NutritionScreen(),
+    const AdaptivePlanScreen(),
     const ProfileScreen(),
   ];
 
@@ -54,6 +56,10 @@ class _MainScreenState extends State<MainScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.restaurant_menu),
               label: 'Nutrition',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.auto_awesome),
+              label: 'AI Plan',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),

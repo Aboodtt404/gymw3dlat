@@ -127,7 +127,7 @@ class NutritionixService {
     print('Raw food data: $data');
 
     return Food(
-      id: data['nix_item_id'] ?? const Uuid().v4(),
+      id: data['nix_item_id'] ?? Uuid().v4(),
       name: data['food_name'] ?? data['item_name'] ?? '',
       brand: data['brand_name'],
       calories: (data['nf_calories'] ?? 0).toDouble(),

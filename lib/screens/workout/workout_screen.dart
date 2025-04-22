@@ -708,7 +708,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               }
 
               final template = WorkoutTemplate(
-                id: const Uuid().v4(),
+                id: Uuid().v4(),
                 userId: SupabaseService.currentUser!.id,
                 name: nameController.text,
                 description: descriptionController.text,

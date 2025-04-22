@@ -58,8 +58,6 @@ class _NutritionInsightsScreenState extends State<NutritionInsightsScreen> {
                 const SizedBox(height: 24),
                 _buildMacroDistribution(),
                 const SizedBox(height: 24),
-                _buildMealTimingInsights(),
-                const SizedBox(height: 24),
                 _buildFrequentFoods(),
                 const SizedBox(height: 24),
                 _buildGoalsProgress(),
@@ -193,56 +191,6 @@ class _NutritionInsightsScreenState extends State<NutritionInsightsScreen> {
     );
   }
 
-  Widget _buildMealTimingInsights() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Meal Timing Patterns',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FutureBuilder<Map<String, List<int>>>(
-              future:
-                  _analyticsService.getMealTimingPatterns(_selectedTimeRange),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                final data = snapshot.data ?? {};
-                return Column(
-                  children: data.entries.map((entry) {
-                    final avgTime = entry.value.isEmpty
-                        ? 0
-                        : entry.value.reduce((a, b) => a + b) /
-                            entry.value.length;
-                    return ListTile(
-                      title: Text(entry.key.toUpperCase()),
-                      subtitle: Text(
-                        'Average time: ${avgTime.toStringAsFixed(1)}:00',
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFrequentFoods() {
     return Card(
       child: Padding(
@@ -309,7 +257,7 @@ class _NutritionInsightsScreenState extends State<NutritionInsightsScreen> {
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return const Center(child: Text('No Goals have been set yet'));
                 }
 
                 final progress = snapshot.data ?? {};

@@ -57,9 +57,61 @@ class SupabaseService {
     try {
       print('Attempting to create user with email: $email'); // Debug log
 
+      // First check if a user with this email already exists in the auth system
+      try {
+        // Try to sign in with the provided credentials
+        final signInResponse = await _staticClient.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+
+        if (signInResponse.user != null) {
+          print(
+              'User already exists in auth, checking profile...'); // Debug log
+
+          // Check if this user has a profile in the database
+          final userData = await _staticClient
+              .from('users')
+              .select()
+              .eq('auth_id', signInResponse.user!.id)
+              .maybeSingle();
+
+          if (userData == null) {
+            print(
+                'User exists in auth but not in database, creating profile...'); // Debug log
+
+            final now = DateTime.now().toIso8601String();
+
+            // Create user profile
+            await _staticClient.from('users').insert({
+              'auth_id': signInResponse.user!.id,
+              'name': name,
+              'email': email,
+              'photo_url': null,
+              'created_at': now,
+              'updated_at': now,
+            }).select();
+
+            print(
+                'User profile created successfully for existing auth user'); // Debug log
+          }
+
+          // Return the sign-in response since user already exists
+          return signInResponse;
+        }
+      } catch (e) {
+        // User doesn't exist or wrong password - continue with normal sign up
+        print(
+            'User does not exist or wrong password, proceeding with signup'); // Debug log
+      }
+
+      // Normal sign up process
       final response = await _staticClient.auth.signUp(
         email: email,
         password: password,
+        data: {
+          'name': name, // Store name in user metadata
+        },
       );
 
       print('Auth signup response: $response'); // Debug log
@@ -67,12 +119,16 @@ class SupabaseService {
       if (response.user != null) {
         print('User created, attempting to insert profile...'); // Debug log
 
+        final now = DateTime.now().toIso8601String();
+
         // Create user profile in Supabase
         await _staticClient.from('users').insert({
           'auth_id': response.user!.id,
           'name': name,
           'email': email,
-          'created_at': DateTime.now().toIso8601String(),
+          'photo_url': null,
+          'created_at': now,
+          'updated_at': now,
         }).select(); // Add select() to get response
 
         print('User profile created successfully'); // Debug log

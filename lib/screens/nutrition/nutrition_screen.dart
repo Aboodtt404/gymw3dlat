@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../../models/meal_log_model.dart';
 import '../../models/food_model.dart';
+import '../../models/meal_plan_model.dart' as meal_plan;
 import '../../services/food_service.dart';
+import '../../services/meal_plan_service.dart';
+import '../../services/supabase_service.dart';
 import '../../styles/styles.dart';
 import 'food_search_screen.dart';
 import 'nutrition_insights_screen.dart';
@@ -15,6 +19,7 @@ class NutritionScreen extends StatefulWidget {
 
 class _NutritionScreenState extends State<NutritionScreen> {
   final _foodService = FoodService();
+  final _mealPlanService = MealPlanService();
   Map<MealType, List<Food>> _meals = {
     MealType.breakfast: [],
     MealType.lunch: [],
@@ -22,6 +27,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
     MealType.snack: [],
   };
   bool _isLoading = true;
+  bool _isSavingMealPlan = false;
 
   @override
   void initState() {
@@ -71,6 +77,92 @@ class _NutritionScreenState extends State<NutritionScreen> {
       'carbs': carbs,
       'fat': fat,
     };
+  }
+
+  Future<void> _saveMealPlan() async {
+    // Check if there are any meals
+    if (_meals.values.every((foods) => foods.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Cannot save an empty meal plan. Add some foods first.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final userId = SupabaseService.client.auth.currentUser?.id;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You need to be logged in to save a meal plan'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSavingMealPlan = true);
+
+    try {
+      // Convert foods to meal entries
+      final List<meal_plan.MealEntry> mealEntries = [];
+
+      for (final entry in _meals.entries) {
+        for (final food in entry.value) {
+          mealEntries.add(
+            meal_plan.MealEntry(
+              id: const Uuid().v4(),
+              foodName: food.name,
+              brandName: food.brand,
+              type: _convertMealType(entry.key),
+              servingSize: food.servingSize,
+              servingUnit: food.servingUnit,
+              calories: food.calories,
+              protein: food.protein,
+              carbs: food.carbs,
+              fat: food.fat,
+              loggedAt: DateTime.now(),
+            ),
+          );
+        }
+      }
+
+      // Create the meal plan
+      final mealPlan = meal_plan.MealPlan(
+        id: const Uuid().v4(),
+        userId: userId,
+        date: DateTime.now(),
+        meals: mealEntries,
+        createdAt: DateTime.now(),
+      );
+
+      // Save to database
+      await _mealPlanService.createPlan(mealPlan);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Meal plan saved successfully!'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save meal plan: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isSavingMealPlan = false);
+    }
   }
 
   Future<void> _addFood(MealType mealType) async {
@@ -353,6 +445,25 @@ class _NutritionScreenState extends State<NutritionScreen> {
       appBar: AppBar(
         title: const Text('Nutrition'),
         actions: [
+          // Save as meal plan button
+          if (_isSavingMealPlan)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.save),
+              tooltip: 'Save as Meal Plan',
+              onPressed: _saveMealPlan,
+            ),
           IconButton(
             icon: const Icon(Icons.insights),
             tooltip: 'Nutrition Insights',
@@ -385,5 +496,21 @@ class _NutritionScreenState extends State<NutritionScreen> {
               ],
             ),
     );
+  }
+
+  // Helper method to convert between MealType enums
+  meal_plan.MealType _convertMealType(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return meal_plan.MealType.breakfast;
+      case MealType.lunch:
+        return meal_plan.MealType.lunch;
+      case MealType.dinner:
+        return meal_plan.MealType.dinner;
+      case MealType.snack:
+        return meal_plan.MealType.snack;
+      default:
+        return meal_plan.MealType.snack;
+    }
   }
 }

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/notifications_screen.dart';
+import '../adaptive_plan_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -135,12 +136,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Styles.primaryColor.withOpacity(0.1),
+              image: _userData?['photo_url'] != null
+                  ? DecorationImage(
+                      image: NetworkImage(_userData!['photo_url']),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(
-              Icons.person,
-              size: 50,
-              color: Styles.primaryColor,
-            ),
+            child: _userData?['photo_url'] == null
+                ? const Icon(
+                    Icons.person,
+                    size: 50,
+                    color: Styles.primaryColor,
+                  )
+                : null,
           ),
           const SizedBox(height: AppConstants.defaultPadding),
           Text(
@@ -244,6 +253,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   builder: (context) => const EditProfileScreen(),
                 ),
               ).then((_) => _loadUserData());
+            },
+          ),
+          const Divider(color: Styles.cardBackground),
+          ListTile(
+            leading: const Icon(Icons.auto_awesome, color: Styles.subtleText),
+            title: Text('AI Adaptive Plan', style: Styles.bodyStyle),
+            trailing: const Icon(Icons.chevron_right, color: Styles.subtleText),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AdaptivePlanScreen(),
+                ),
+              );
             },
           ),
           const Divider(color: Styles.cardBackground),

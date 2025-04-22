@@ -120,7 +120,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           [];
 
       _workoutLog = WorkoutLog(
-        id: const Uuid().v4(),
+        id: Uuid().v4(),
         userId: userData['auth_id'],
         templateId: widget.template?.id,
         name: widget.template?.name ?? 'Quick Workout',
@@ -325,6 +325,11 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         appBar: AppBar(
           title: Text(_workoutLog.name),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.save),
+              tooltip: 'Save as Template',
+              onPressed: _saveAsTemplate,
+            ),
             IconButton(
               icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
               onPressed: () {
@@ -545,5 +550,91 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _saveAsTemplate() async {
+    final nameController = TextEditingController(text: _workoutLog.name);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Save as Template'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Template Name',
+            hintText: 'Enter template name',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, nameController.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.trim().isNotEmpty) {
+      try {
+        setState(() => _isLoading = true);
+
+        // Convert workout log to template
+        final exercises = _workoutLog.exercises
+            .map((e) => ExerciseSet(
+                  exerciseId: e.exerciseId,
+                  sets: e.sets.length,
+                  reps: e.sets.isNotEmpty ? e.sets.first.reps : 0,
+                  weight: e.sets.isNotEmpty ? e.sets.first.weight : null,
+                ))
+            .toList();
+
+        // Calculate estimated duration based on workout log
+        final estimatedDuration = _workoutLog.endTime != null
+            ? _workoutLog.endTime!.difference(_workoutLog.startTime).inMinutes
+            : _elapsed.inMinutes;
+
+        final template = WorkoutTemplate(
+          id: Uuid().v4(),
+          userId: _workoutLog.userId,
+          name: result.trim(),
+          description: '',
+          exercises: exercises,
+          estimatedDuration: estimatedDuration > 0
+              ? estimatedDuration
+              : 30, // Default to 30 minutes if zero
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        await _workoutService.addWorkoutTemplate(template);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout saved as template'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving template: $e'),
+              backgroundColor: Styles.errorColor,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
   }
 }

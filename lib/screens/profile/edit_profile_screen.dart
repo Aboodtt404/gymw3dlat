@@ -21,6 +21,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _emailController = TextEditingController();
   dynamic _selectedImage; // Can be either File or Uint8List
   bool _isLoading = false;
+  String? _currentPhotoUrl;
 
   @override
   void initState() {
@@ -49,6 +50,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         _nameController.text = userData['name'] ?? '';
         _emailController.text = userData['email'] ?? '';
+        _currentPhotoUrl = userData['photo_url'];
       });
     } else {
       // If no user data, try to fetch it
@@ -87,6 +89,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<String?> _uploadImage(dynamic image) async {
+    try {
+      final String fileName =
+          'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String path = 'profiles/$fileName';
+
+      if (kIsWeb) {
+        // For web, upload bytes directly
+        final bytes = image as Uint8List;
+        await context.read<UserProvider>().uploadProfileImage(path, bytes);
+      } else {
+        // For native platforms, upload file
+        final file = image as File;
+        final bytes = await file.readAsBytes();
+        await context.read<UserProvider>().uploadProfileImage(path, bytes);
+      }
+
+      // Get the public URL
+      final String publicUrl = context.read<UserProvider>().getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      debugPrint('Error uploading image: $e');
+      rethrow;
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -103,8 +131,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Upload image if selected
       String? photoUrl;
       if (_selectedImage != null) {
-        // TODO: Implement image upload to storage
-        // photoUrl = await _uploadImage(_selectedImage!);
+        photoUrl = await _uploadImage(_selectedImage);
       }
 
       await userProvider.updateUserProfile(
@@ -180,7 +207,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Styles.primaryColor.withOpacity(0.1),
-                      image: _selectedImage != null
+                      image: (_selectedImage != null)
                           ? DecorationImage(
                               image: kIsWeb
                                   ? MemoryImage(_selectedImage as Uint8List)
@@ -188,9 +215,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       as ImageProvider,
                               fit: BoxFit.cover,
                             )
-                          : null,
+                          : (_currentPhotoUrl != null)
+                              ? DecorationImage(
+                                  image: NetworkImage(_currentPhotoUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                     ),
-                    child: _selectedImage == null
+                    child: (_selectedImage == null && _currentPhotoUrl == null)
                         ? const Icon(
                             Icons.person,
                             size: 60,
