@@ -231,21 +231,21 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                             children: [
                               Text(
                                 'P: ${food.protein.toStringAsFixed(1)}g',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Styles.proteinColor,
                                 ),
                               ),
                               Text(
                                 'C: ${food.carbs.toStringAsFixed(1)}g',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Styles.carbsColor,
                                 ),
                               ),
                               Text(
                                 'F: ${food.fat.toStringAsFixed(1)}g',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Styles.fatColor,
                                 ),

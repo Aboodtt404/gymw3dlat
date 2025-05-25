@@ -7,7 +7,6 @@ import '../../constants/app_constants.dart';
 import '../auth/login_screen.dart';
 import '../workout/active_workout_screen.dart';
 import '../nutrition/nutrition_screen.dart';
-import '../adaptive_plan_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -173,14 +172,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: AppConstants.defaultPadding),
                             _buildDailySummaryCard(),
                             const SizedBox(height: AppConstants.defaultPadding),
-                            Text(
+                            const Text(
                               'Quick Actions',
                               style: Styles.subheadingStyle,
                             ),
                             const SizedBox(height: AppConstants.smallPadding),
                             _buildQuickActionsGrid(),
                             const SizedBox(height: AppConstants.defaultPadding),
-                            Text(
+                            const Text(
                               'Your Progress',
                               style: Styles.subheadingStyle,
                             ),
@@ -252,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Today\'s Summary',
             style: Styles.subheadingStyle,
           ),
@@ -321,19 +320,6 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         _buildActionCard(
-          icon: Icons.auto_awesome,
-          title: 'AI Plan',
-          color: Colors.purple,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdaptivePlanScreen(),
-              ),
-            );
-          },
-        ),
-        _buildActionCard(
           icon: Icons.water_drop_outlined,
           title: 'Log Water',
           color: Colors.blue,
@@ -344,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProgressCard() {
-    final targetCalories = 2000.0; // TODO: Make configurable
+    const targetCalories = 2000.0; // TODO: Make configurable
     final progress = _nutritionTotals['calories']! / targetCalories;
 
     return Container(
@@ -359,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Daily Goal',
                     style: Styles.subheadingStyle,
                   ),

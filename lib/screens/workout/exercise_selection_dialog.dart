@@ -3,6 +3,7 @@ import 'package:gymw3dlat/constants/app_constants.dart';
 import 'package:gymw3dlat/models/workout_models.dart';
 import 'package:gymw3dlat/services/workout_service.dart';
 import 'package:gymw3dlat/utils/styles.dart';
+import 'package:gymw3dlat/models/exercise_model.dart' as api_model;
 
 class ExerciseSelectionDialog extends StatefulWidget {
   const ExerciseSelectionDialog({super.key});
@@ -23,8 +24,9 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
   );
   final _notesController = TextEditingController();
 
-  List<Exercise> _exercises = [];
-  Exercise? _selectedExercise;
+  List<dynamic> _exercises = [];
+  dynamic _selectedExercise;
+  bool _isSearchResult = false;
   ExerciseCategory _selectedCategory = ExerciseCategory.chest;
   bool _isLoading = true;
 
@@ -53,6 +55,8 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
       if (mounted) {
         setState(() {
           _exercises = exercises;
+          _isSearchResult = false;
+          _selectedExercise = null;
           _isLoading = false;
         });
       }
@@ -71,21 +75,60 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
   }
 
   Future<void> _searchExercises(String query) async {
+    if (query.trim().length < 3) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter at least 3 characters to search'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final exercises = await _workoutService.searchExercises(query);
       if (mounted) {
         setState(() {
           _exercises = exercises;
+          _isSearchResult = true;
+          _selectedExercise = null;
           _isLoading = false;
         });
+
+        // Show feedback if no results found
+        if (exercises.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No exercises found for "$query"'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
+      print('Error searching exercises: $e');
       if (mounted) {
         setState(() => _isLoading = false);
+
+        String errorMessage = 'Error searching exercises';
+
+        // Show a more useful error message for common issues
+        if (e.toString().contains('Host not found')) {
+          errorMessage = 'Network error: Please check your internet connection';
+        } else if (e.toString().contains('403')) {
+          errorMessage = 'API key error: Please check your ExerciseDB API key';
+        } else if (e.toString().contains('429')) {
+          errorMessage = 'API rate limit exceeded: Please try again later';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error searching exercises: $e'),
+            content: Text(errorMessage),
             behavior: SnackBarBehavior.floating,
             backgroundColor: Styles.errorColor,
           ),
@@ -133,16 +176,36 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
       return;
     }
 
-    final exerciseSet = ExerciseSet(
-      exerciseId: _selectedExercise!.id,
-      sets: sets!,
-      reps: reps!,
-      weight: weight,
-      restTime: rest ?? 60, // Default rest period of 60 seconds
-      notes: _notesController.text.trim(),
-    );
+    if (_isSearchResult) {
+      // Handle API exercise model
+      final apiExercise = _selectedExercise as api_model.Exercise;
 
-    Navigator.pop(context, exerciseSet);
+      // Convert API exercise to ExerciseSet
+      final exerciseSet = ExerciseSet(
+        exerciseId: apiExercise.id,
+        sets: sets!,
+        reps: reps!,
+        weight: weight,
+        restTime: rest ?? 60, // Default rest period of 60 seconds
+        notes: _notesController.text.trim(),
+      );
+
+      Navigator.pop(context, exerciseSet);
+    } else {
+      // Handle local database exercise model
+      final exercise = _selectedExercise as Exercise;
+
+      final exerciseSet = ExerciseSet(
+        exerciseId: exercise.id,
+        sets: sets!,
+        reps: reps!,
+        weight: weight,
+        restTime: rest ?? 60, // Default rest period of 60 seconds
+        notes: _notesController.text.trim(),
+      );
+
+      Navigator.pop(context, exerciseSet);
+    }
   }
 
   @override
@@ -154,7 +217,7 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
+            const Text(
               'Add Exercise',
               style: Styles.headingStyle,
             ),
@@ -212,10 +275,25 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
                   itemCount: _exercises.length,
                   itemBuilder: (context, index) {
                     final exercise = _exercises[index];
-                    return RadioListTile<Exercise>(
-                      title: Text(exercise.name),
+                    String title, subtitle;
+
+                    if (_isSearchResult) {
+                      // API Exercise model
+                      final apiExercise = exercise as api_model.Exercise;
+                      title = apiExercise.name;
+                      subtitle =
+                          'Target: ${apiExercise.target}, Body Part: ${apiExercise.bodyPart}';
+                    } else {
+                      // Local Exercise model
+                      final localExercise = exercise as Exercise;
+                      title = localExercise.name;
+                      subtitle = localExercise.description;
+                    }
+
+                    return RadioListTile<dynamic>(
+                      title: Text(title),
                       subtitle: Text(
-                        exercise.description,
+                        subtitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

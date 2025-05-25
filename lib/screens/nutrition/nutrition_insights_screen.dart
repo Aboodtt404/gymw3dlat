@@ -101,8 +101,8 @@ class _NutritionInsightsScreenState extends State<NutritionInsightsScreen> {
 
                   return LineChart(
                     LineChartData(
-                      gridData: FlGridData(show: true),
-                      titlesData: FlTitlesData(show: true),
+                      gridData: const FlGridData(show: true),
+                      titlesData: const FlTitlesData(show: true),
                       borderData: FlBorderData(show: true),
                       lineBarsData: [
                         LineChartBarData(
@@ -110,7 +110,7 @@ class _NutritionInsightsScreenState extends State<NutritionInsightsScreen> {
                           isCurved: true,
                           color: Theme.of(context).primaryColor,
                           barWidth: 3,
-                          dotData: FlDotData(show: false),
+                          dotData: const FlDotData(show: false),
                         ),
                       ],
                     ),

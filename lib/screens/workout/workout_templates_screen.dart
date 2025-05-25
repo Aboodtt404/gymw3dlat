@@ -54,10 +54,10 @@ class _WorkoutTemplatesScreenState extends State<WorkoutTemplatesScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Styles.primaryColor,
                   borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
+                      BorderRadius.vertical(top: Radius.circular(12)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

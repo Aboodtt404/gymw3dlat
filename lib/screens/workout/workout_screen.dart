@@ -19,7 +19,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   final ExerciseService _exerciseService = ExerciseService();
   final WorkoutTemplateService _templateService = WorkoutTemplateService();
   List<Exercise> _exercises = [];
-  List<WorkoutExercise> _selectedExercises = [];
+  final List<WorkoutExercise> _selectedExercises = [];
   bool _isLoading = true;
   String _selectedFilter = 'all';
   String _selectedValue = '';
@@ -42,6 +42,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   Future<void> _loadExercises() async {
     setState(() => _isLoading = true);
     try {
+      print(
+          'Loading exercises with filter: $_selectedFilter, value: $_selectedValue');
       List<Exercise> exercises;
       switch (_selectedFilter) {
         case 'bodyPart':
@@ -59,11 +61,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         default:
           exercises = await _exerciseService.getAllExercises();
       }
+      print('Successfully loaded ${exercises.length} exercises');
       setState(() {
         _exercises = exercises;
         _isLoading = false;
       });
     } catch (e) {
+      print('Error loading exercises: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -259,18 +263,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   if (value.isEmpty) {
                     _loadExercises();
                   } else {
-                    _exercises = _exercises
-                        .where((exercise) =>
-                            exercise.name
-                                .toLowerCase()
-                                .contains(value.toLowerCase()) ||
-                            exercise.target
-                                .toLowerCase()
-                                .contains(value.toLowerCase()) ||
-                            exercise.bodyPart
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                        .toList();
+                    _searchExercises(value);
                   }
                 });
               },
@@ -485,7 +478,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                             width: 24,
                             height: 24,
                             margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Styles.primaryColor,
                               shape: BoxShape.circle,
                             ),
@@ -566,7 +559,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: weightController,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Weight (optional)',
                   hintText: 'Enter weight in kg',
@@ -708,7 +702,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               }
 
               final template = WorkoutTemplate(
-                id: Uuid().v4(),
+                id: const Uuid().v4(),
                 userId: SupabaseService.currentUser!.id,
                 name: nameController.text,
                 description: descriptionController.text,
@@ -744,6 +738,61 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _searchExercises(String query) async {
+    if (query.trim().length < 3) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter at least 3 characters to search'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final exercises = await _exerciseService.searchExercisesByName(query);
+      setState(() {
+        _exercises = exercises;
+        _isLoading = false;
+      });
+
+      // Show feedback if no results found
+      if (exercises.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No exercises found for "$query"'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error searching exercises: $e');
+      setState(() => _isLoading = false);
+      if (mounted) {
+        String errorMessage = 'Error searching exercises';
+
+        // Show a more useful error message for common issues
+        if (e.toString().contains('Host not found')) {
+          errorMessage = 'Network error: Please check your internet connection';
+        } else if (e.toString().contains('403')) {
+          errorMessage = 'API key error: Please check your ExerciseDB API key';
+        } else if (e.toString().contains('429')) {
+          errorMessage = 'API rate limit exceeded: Please try again later';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

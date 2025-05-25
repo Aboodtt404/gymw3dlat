@@ -7,7 +7,8 @@ import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/notifications_screen.dart';
-import '../adaptive_plan_screen.dart';
+import '../../models/user_model.dart';
+import '../../providers/user_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -88,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               : CustomScrollView(
                   slivers: [
-                    SliverAppBar(
+                    const SliverAppBar(
                       floating: true,
                       backgroundColor: Colors.transparent,
                       title: Text('Profile', style: Styles.headingStyle),
@@ -173,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your Progress', style: Styles.subheadingStyle),
+          const Text('Your Progress', style: Styles.subheadingStyle),
           const SizedBox(height: AppConstants.defaultPadding),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -237,14 +238,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
+          const Padding(
+            padding: EdgeInsets.all(AppConstants.defaultPadding),
             child: Text('Settings', style: Styles.subheadingStyle),
           ),
           const Divider(color: Styles.cardBackground),
           ListTile(
             leading: const Icon(Icons.person_outline, color: Styles.subtleText),
-            title: Text('Edit Profile', style: Styles.bodyStyle),
+            title: const Text('Edit Profile', style: Styles.bodyStyle),
             trailing: const Icon(Icons.chevron_right, color: Styles.subtleText),
             onTap: () {
               Navigator.push(
@@ -257,23 +258,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const Divider(color: Styles.cardBackground),
           ListTile(
-            leading: const Icon(Icons.auto_awesome, color: Styles.subtleText),
-            title: Text('AI Adaptive Plan', style: Styles.bodyStyle),
-            trailing: const Icon(Icons.chevron_right, color: Styles.subtleText),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AdaptivePlanScreen(),
-                ),
-              );
-            },
-          ),
-          const Divider(color: Styles.cardBackground),
-          ListTile(
             leading: const Icon(Icons.notifications_outlined,
                 color: Styles.subtleText),
-            title: Text('Notifications', style: Styles.bodyStyle),
+            title: const Text('Notifications', style: Styles.bodyStyle),
             trailing: const Icon(Icons.chevron_right, color: Styles.subtleText),
             onTap: () {
               Navigator.push(

@@ -360,7 +360,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen>
                       children: [
                         Text(
                           'P: ${food.protein.toStringAsFixed(1)}g',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Styles.proteinColor,
                             fontSize: 12,
                           ),
@@ -368,7 +368,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen>
                         const SizedBox(width: 8),
                         Text(
                           'C: ${food.carbs.toStringAsFixed(1)}g',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Styles.carbsColor,
                             fontSize: 12,
                           ),
@@ -376,7 +376,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen>
                         const SizedBox(width: 8),
                         Text(
                           'F: ${food.fat.toStringAsFixed(1)}g',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Styles.fatColor,
                             fontSize: 12,
                           ),

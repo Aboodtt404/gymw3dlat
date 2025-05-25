@@ -120,7 +120,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           [];
 
       _workoutLog = WorkoutLog(
-        id: Uuid().v4(),
+        id: const Uuid().v4(),
         userId: userData['auth_id'],
         templateId: widget.template?.id,
         name: widget.template?.name ?? 'Quick Workout',
@@ -468,12 +468,12 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Progress',
                 style: Styles.bodyStyle,
               ),
               Text(
-                '${completedSets}/${totalSets} sets',
+                '$completedSets/$totalSets sets',
                 style: Styles.bodyStyle.copyWith(color: Styles.subtleText),
               ),
             ],
@@ -599,7 +599,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             : _elapsed.inMinutes;
 
         final template = WorkoutTemplate(
-          id: Uuid().v4(),
+          id: const Uuid().v4(),
           userId: _workoutLog.userId,
           name: result.trim(),
           description: '',

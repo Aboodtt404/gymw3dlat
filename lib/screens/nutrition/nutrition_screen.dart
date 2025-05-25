@@ -106,24 +106,29 @@ class _NutritionScreenState extends State<NutritionScreen> {
     setState(() => _isSavingMealPlan = true);
 
     try {
-      // Convert foods to meal entries
-      final List<meal_plan.MealEntry> mealEntries = [];
+      // Convert foods to meals
+      final List<meal_plan.Meal> meals = [];
 
       for (final entry in _meals.entries) {
-        for (final food in entry.value) {
-          mealEntries.add(
-            meal_plan.MealEntry(
+        if (entry.value.isNotEmpty) {
+          meals.add(
+            meal_plan.Meal(
               id: const Uuid().v4(),
-              foodName: food.name,
-              brandName: food.brand,
+              name: entry.key.name,
               type: _convertMealType(entry.key),
-              servingSize: food.servingSize,
-              servingUnit: food.servingUnit,
-              calories: food.calories,
-              protein: food.protein,
-              carbs: food.carbs,
-              fat: food.fat,
-              loggedAt: DateTime.now(),
+              foods: entry.value
+                  .map((food) => meal_plan.FoodItem(
+                        id: food.id,
+                        name: food.name,
+                        servingSize: food.servingSize,
+                        servingUnit: food.servingUnit,
+                        calories: food.calories,
+                        protein: food.protein,
+                        carbs: food.carbs,
+                        fat: food.fat,
+                      ))
+                  .toList(),
+              time: DateTime.now(),
             ),
           );
         }
@@ -134,7 +139,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
         id: const Uuid().v4(),
         userId: userId,
         date: DateTime.now(),
-        meals: mealEntries,
+        meals: meals,
         createdAt: DateTime.now(),
       );
 
@@ -405,7 +410,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'P: ${food.protein.toStringAsFixed(1)}g',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Styles.proteinColor,
                       ),
@@ -413,7 +418,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'C: ${food.carbs.toStringAsFixed(1)}g',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Styles.carbsColor,
                       ),
@@ -421,7 +426,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'F: ${food.fat.toStringAsFixed(1)}g',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Styles.fatColor,
                       ),

@@ -156,7 +156,6 @@ class Styles {
         primary: primaryColor,
         secondary: accentColor,
         surface: cardBackground,
-        background: darkBackground,
       ),
       textTheme: const TextTheme(
         headlineMedium: TextStyle(

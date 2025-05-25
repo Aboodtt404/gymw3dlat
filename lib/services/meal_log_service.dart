@@ -2,7 +2,6 @@ import 'package:gymw3dlat/models/meal_log_model.dart';
 import 'package:gymw3dlat/models/food_model.dart';
 import 'package:gymw3dlat/services/supabase_service.dart';
 import 'package:gymw3dlat/constants/app_constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MealLogService {
   final _supabase = SupabaseService.client;

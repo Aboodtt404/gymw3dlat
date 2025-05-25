@@ -1,4 +1,3 @@
-import 'package:gymw3dlat/constants/app_constants.dart';
 
 enum ExerciseCategory {
   chest,

@@ -27,6 +27,37 @@ class ExerciseService {
     }
   }
 
+  // Search exercises by name
+  Future<List<Exercise>> searchExercisesByName(String name) async {
+    print('Searching for exercises with name: $name');
+    print(
+        'API Key: ${_apiKey.substring(0, 5)}...'); // Print first few chars for safety
+
+    // Fix the URL to match the correct API endpoint format
+    final uri =
+        Uri.parse('https://exercisedb.p.rapidapi.com/exercises/name/$name');
+    print('Request URL: $uri');
+
+    final response = await http.get(
+      uri,
+      headers: _headers,
+    );
+
+    print('Response status code: ${response.statusCode}');
+    if (response.statusCode != 200) {
+      print('Error response body: ${response.body}');
+    }
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      print('Found ${data.length} exercises');
+      return data.map((json) => Exercise.fromJson(json)).toList();
+    } else {
+      throw Exception(
+          'Failed to search exercises for "$name" (Status: ${response.statusCode})');
+    }
+  }
+
   // Get exercises by body part
   Future<List<Exercise>> getExercisesByBodyPart(String bodyPart) async {
     final response = await http.get(

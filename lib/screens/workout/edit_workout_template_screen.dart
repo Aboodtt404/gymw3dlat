@@ -57,7 +57,7 @@ class _EditWorkoutTemplateScreenState extends State<EditWorkoutTemplateScreen> {
       }
 
       final template = WorkoutTemplate(
-        id: widget.template?.id ?? Uuid().v4(),
+        id: widget.template?.id ?? const Uuid().v4(),
         userId: userData['id'],
         name: _nameController.text,
         description: _descriptionController.text,
@@ -183,7 +183,7 @@ class _EditWorkoutTemplateScreenState extends State<EditWorkoutTemplateScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Exercises',
                         style: Styles.subheadingStyle,
                       ),
@@ -215,10 +215,9 @@ class _EditWorkoutTemplateScreenState extends State<EditWorkoutTemplateScreen> {
                           child: ListTile(
                             title: Text(exercise.exerciseId),
                             subtitle: Text(
-                              '${exercise.sets} sets × ${exercise.reps} reps' +
-                                  (exercise.weight != null
+                              '${exercise.sets} sets × ${exercise.reps} reps${exercise.weight != null
                                       ? ' @ ${exercise.weight}kg'
-                                      : ''),
+                                      : ''}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,

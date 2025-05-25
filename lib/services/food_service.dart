@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/food_model.dart';
 import '../models/meal_log_model.dart';
 import 'supabase_service.dart';

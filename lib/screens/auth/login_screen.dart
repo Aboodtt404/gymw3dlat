@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Styles.primaryColor.withOpacity(0.1),
                         ),
                       ),
-                      Icon(
+                      const Icon(
                         Icons.fitness_center,
                         size: 64,
                         color: Styles.primaryColor,

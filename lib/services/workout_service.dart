@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:gymw3dlat/models/workout_models.dart';
 import 'package:gymw3dlat/services/supabase_service.dart';
 import 'package:gymw3dlat/constants/app_constants.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../models/exercise_model.dart' as exercise_model;
 
 class WorkoutService {
   // Exercise operations
@@ -33,15 +37,31 @@ class WorkoutService {
     }
   }
 
-  Future<List<Exercise>> searchExercises(String query) async {
+  // Updated to use ExerciseDB API
+  Future<List<exercise_model.Exercise>> searchExercises(String query) async {
     try {
-      final response = await SupabaseService.client
-          .from(AppConstants.exercisesCollection)
-          .select()
-          .ilike('name', '%$query%')
-          .limit(20);
-
-      return (response as List).map((json) => Exercise.fromJson(json)).toList();
+      print('Searching for exercises with name: $query');
+      
+      final apiKey = dotenv.env['EXERCISEDB_API_KEY'] ?? '';
+      final headers = {
+        'X-RapidAPI-Key': apiKey,
+        'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com'
+      };
+      
+      final uri = Uri.parse('https://exercisedb.p.rapidapi.com/exercises/name/$query');
+      print('Request URL: $uri');
+      
+      final response = await http.get(uri, headers: headers);
+      
+      print('Response status code: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('Error response body: ${response.body}');
+        throw Exception('API request failed: ${response.statusCode}');
+      }
+      
+      final List<dynamic> data = json.decode(response.body);
+      print('Found ${data.length} exercises');
+      return data.map((json) => exercise_model.Exercise.fromJson(json)).toList();
     } catch (e) {
       throw _handleError('Error searching exercises', e);
     }

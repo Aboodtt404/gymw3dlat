@@ -42,7 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Logo or Icon
-                  Icon(
+                  const Icon(
                     Icons.fitness_center,
                     size: 64,
                     color: Styles.primaryColor,

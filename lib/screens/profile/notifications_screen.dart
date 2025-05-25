@@ -174,7 +174,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Reminder Settings',
                     style: Styles.subheadingStyle,
                   ),

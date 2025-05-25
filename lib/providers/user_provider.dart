@@ -83,7 +83,7 @@ class UserProvider extends ChangeNotifier {
         'email': user.email ?? '',
         'name':
             user.userMetadata?['name'] ?? user.email?.split('@')[0] ?? 'User',
-        'photo_url': user.userMetadata?['avatar_url'] ?? null,
+        'photo_url': user.userMetadata?['avatar_url'],
         'created_at': now,
         'updated_at': now,
       };
@@ -91,10 +91,8 @@ class UserProvider extends ChangeNotifier {
       final insertedData =
           await _supabase.from('users').insert(userData).select().single();
 
-      if (insertedData != null) {
-        _user = UserModel.fromJson(insertedData);
-      }
-    } catch (e) {
+      _user = UserModel.fromJson(insertedData);
+        } catch (e) {
       debugPrint('Error creating user profile: $e');
       _error = e.toString();
     }
@@ -162,10 +160,6 @@ class UserProvider extends ChangeNotifier {
           .eq('auth_id', session.user.id)
           .select()
           .single();
-
-      if (updatedData == null) {
-        throw Exception('Failed to update user profile');
-      }
 
       _user = UserModel.fromJson(updatedData);
       notifyListeners();
@@ -299,11 +293,9 @@ class UserProvider extends ChangeNotifier {
         final insertedData =
             await _supabase.from('users').insert(userData).select().single();
 
-        if (insertedData != null) {
-          _user = UserModel.fromJson(insertedData);
-          notifyListeners();
-        }
-
+        _user = UserModel.fromJson(insertedData);
+        notifyListeners();
+      
         _error = null;
       }
     } catch (e) {
