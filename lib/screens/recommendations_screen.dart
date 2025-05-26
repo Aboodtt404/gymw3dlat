@@ -75,7 +75,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: Styles.primaryColor,
               onPrimary: Colors.white,
               surface: Colors.white,
@@ -230,11 +230,11 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.fitness_center, color: Styles.primaryColor),
-                const SizedBox(width: 8),
-                const Text(
+                Icon(Icons.fitness_center, color: Styles.primaryColor),
+                SizedBox(width: 8),
+                Text(
                   'Workout Recommendations',
                   style: TextStyle(
                     fontSize: 18,
@@ -334,11 +334,11 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.restaurant, color: Styles.primaryColor),
-                const SizedBox(width: 8),
-                const Text(
+                Icon(Icons.restaurant, color: Styles.primaryColor),
+                SizedBox(width: 8),
+                Text(
                   'Nutrition Recommendations',
                   style: TextStyle(
                     fontSize: 18,

@@ -1,4 +1,3 @@
-
 enum ExerciseCategory {
   chest,
   back,
@@ -253,12 +252,14 @@ class ExerciseLog {
   final String name;
   final List<SetLog> sets;
   final String? notes;
+  final String? gifUrl;
 
   ExerciseLog({
     required this.exerciseId,
     required this.name,
     required this.sets,
     this.notes,
+    this.gifUrl,
   });
 
   factory ExerciseLog.fromJson(Map<String, dynamic> json) {
@@ -267,6 +268,7 @@ class ExerciseLog {
       name: json['name'] as String,
       sets: (json['sets'] as List).map((e) => SetLog.fromJson(e)).toList(),
       notes: json['notes'] as String?,
+      gifUrl: json['gif_url'] as String?,
     );
   }
 
@@ -276,6 +278,7 @@ class ExerciseLog {
       'name': name,
       'sets': sets.map((e) => e.toJson()).toList(),
       'notes': notes,
+      'gif_url': gifUrl,
     };
   }
 }
@@ -313,5 +316,21 @@ class SetLog {
       'completed': completed,
       'notes': notes,
     };
+  }
+
+  SetLog copyWith({
+    int? setNumber,
+    int? reps,
+    double? weight,
+    bool? completed,
+    String? notes,
+  }) {
+    return SetLog(
+      setNumber: setNumber ?? this.setNumber,
+      reps: reps ?? this.reps,
+      weight: weight ?? this.weight,
+      completed: completed ?? this.completed,
+      notes: notes ?? this.notes,
+    );
   }
 }
