@@ -337,7 +337,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen>
               itemBuilder: (context, index) {
                 final food = foods[index];
                 return Dismissible(
-                  key: Key(food.mealLogId ?? food.id.toString()),
+                  key: Key(food.mealLogId ?? food.id ?? UniqueKey().toString()),
                   direction: DismissDirection.endToStart,
                   background: Container(
                     color: Colors.red,

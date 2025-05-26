@@ -14,18 +14,46 @@ class NaturalLanguageMealService {
   /// Parse natural language input into structured meal data
   Future<List<Food>> parseNaturalLanguageInput(String input) async {
     try {
-      debugPrint('Parsing natural language input: $input');
+      debugPrint(
+          '==================== MEAL PARSING START ====================');
+      debugPrint('Raw input: $input');
+      debugPrint('Input length: ${input.length}');
+      debugPrint('Input words: ${input.split(' ').length}');
+
+      // Extract quantities first
+      final quantities = _extractQuantities(input);
+      debugPrint('Extracted quantities: $quantities');
 
       // Use Nutritionix API to parse the natural language input
+      debugPrint('Calling Nutritionix API...');
       final foods = await _nutritionixService.searchFoods(input);
+      debugPrint('Received ${foods.length} foods from Nutritionix');
+
+      for (var food in foods) {
+        debugPrint('Food details:');
+        debugPrint('  - Name: ${food.name}');
+        debugPrint('  - Brand: ${food.brand}');
+        debugPrint('  - Calories: ${food.calories}');
+        debugPrint('  - Protein: ${food.protein}g');
+        debugPrint('  - Carbs: ${food.carbs}g');
+        debugPrint('  - Fat: ${food.fat}g');
+        debugPrint('  - Serving: ${food.servingSize} ${food.servingUnit}');
+      }
 
       if (foods.isEmpty) {
+        debugPrint('WARNING: No foods found for input: $input');
         throw Exception('No foods found for the given input');
       }
 
+      debugPrint('==================== MEAL PARSING END ====================');
       return foods;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint(
+          '==================== MEAL PARSING ERROR ====================');
       debugPrint('Error parsing natural language input: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('Input was: $input');
+      debugPrint('=======================================================');
       throw Exception('Failed to parse meal input: $e');
     }
   }

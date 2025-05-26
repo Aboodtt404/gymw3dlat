@@ -43,13 +43,15 @@ dependencies:
   fl_chart: ^0.66.0
   uuid: ^4.2.2
   intl: ^0.19.0
-  image_picker: ^1.0.7
+  image_picker: ^1.1.2
 
   flutter_localizations:
     sdk: flutter
   sign_in_with_apple: 7.0.0
-  speech_to_text: ^6.5.1
-  permission_handler: ^11.1.0
+  speech_to_text: ^7.0.0
+  permission_handler: ^12.0.0+1
+  image_cropper: ^9.1.0
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

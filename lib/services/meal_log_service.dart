@@ -15,47 +15,37 @@ class MealLogService {
     try {
       debugPrint('Logging meal: ${mealLog.toJson()}');
 
-      // Start a transaction
-      await _supabase.rpc('begin_transaction');
+      // Insert the meal log
+      final mealLogResponse = await _supabase
+          .from('meal_logs')
+          .insert({
+            'id': mealLog.id,
+            'user_id': mealLog.userId,
+            'meal_type': mealLog.mealType.name,
+            'logged_at': mealLog.loggedAt.toIso8601String(),
+            'notes': mealLog.notes,
+          })
+          .select()
+          .single();
 
-      try {
-        // Insert the meal log
-        final mealLogResponse = await _supabase
-            .from('meal_logs')
-            .insert({
-              'id': mealLog.id,
-              'user_id': mealLog.userId,
-              'meal_type': mealLog.mealType.name,
-              'logged_at': mealLog.loggedAt.toIso8601String(),
-              'notes': mealLog.notes,
-            })
-            .select()
-            .single();
+      // Insert all foods in a single batch request
+      final foodsToInsert = mealLog.foods
+          .map((food) => {
+                'meal_log_id': mealLogResponse['id'],
+                'food_id': food.id,
+                'name': food.name,
+                'brand': food.brand,
+                'calories': food.calories,
+                'protein': food.protein,
+                'carbs': food.carbs,
+                'fat': food.fat,
+                'serving_size': food.servingSize,
+                'serving_unit': food.servingUnit,
+              })
+          .toList();
 
-        // Insert each food in the meal_log_foods table
-        for (final food in mealLog.foods) {
-          await _supabase.from('meal_log_foods').insert({
-            'meal_log_id': mealLogResponse['id'],
-            'food_id': food.id,
-            'name': food.name,
-            'brand': food.brand,
-            'calories': food.calories,
-            'protein': food.protein,
-            'carbs': food.carbs,
-            'fat': food.fat,
-            'serving_size': food.servingSize,
-            'serving_unit': food.servingUnit,
-          });
-        }
-
-        // Commit the transaction
-        await _supabase.rpc('commit_transaction');
-        debugPrint('Meal logged successfully');
-      } catch (e) {
-        // Rollback on error
-        await _supabase.rpc('rollback_transaction');
-        throw e;
-      }
+      await _supabase.from('meal_log_foods').insert(foodsToInsert);
+      debugPrint('Meal logged successfully');
     } catch (e) {
       debugPrint('Error logging meal: $e');
       throw Exception('Failed to log meal: $e');

@@ -121,7 +121,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
               type: _convertMealType(entry.key),
               foods: entry.value
                   .map((food) => meal_plan.FoodItem(
-                        id: food.id,
+                        id: food.id ?? const Uuid().v4(),
                         name: food.name,
                         servingSize: food.servingSize,
                         servingUnit: food.servingUnit,
@@ -216,12 +216,17 @@ class _NutritionScreenState extends State<NutritionScreen> {
 
     if (confirm == true) {
       try {
-        if (food.mealLogId != null) {
+        if (food.mealLogId != null && food.id != null) {
+          // Delete only this specific food from the meal log
+          await _foodService.deleteFoodFromMealLog(food.mealLogId!, food.id!);
+
+          // Only update UI if database operation was successful
           setState(() {
             _meals[mealType]!.remove(food);
           });
 
-          await _foodService.deleteMealLog(food.mealLogId!);
+          // Reload meals to ensure UI is in sync with database
+          await _loadMeals();
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -233,10 +238,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
           }
         }
       } catch (e) {
-        setState(() {
-          _meals[mealType]!.add(food);
-        });
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

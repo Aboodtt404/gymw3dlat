@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class Food {
-  final String id;
+  final String? id;
   final String name;
   final double calories;
   final double protein;
@@ -16,7 +16,7 @@ class Food {
   final String? mealLogId;
 
   const Food({
-    required this.id,
+    this.id,
     required this.name,
     required this.calories,
     required this.protein,
@@ -79,7 +79,7 @@ class Food {
 
   factory Food.fromJson(Map<String, dynamic> json) {
     return Food(
-      id: json['id'] as String,
+      id: json['id'] as String?,
       name: json['name'] as String,
       calories: (json['calories'] as num).toDouble(),
       protein: (json['protein'] as num).toDouble(),

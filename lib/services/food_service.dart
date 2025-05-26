@@ -84,7 +84,7 @@ class FoodService {
           .eq('user_id', userId)
           .gte('logged_at',
               DateTime.now().toUtc().subtract(const Duration(days: 1)))
-          .order('logged_at');
+          .order('logged_at', ascending: false);
 
       final meals = {
         MealType.breakfast: <Food>[],
@@ -95,7 +95,12 @@ class FoodService {
 
       for (final log in response) {
         final mealLog = MealLog.fromJson(log);
-        meals[mealLog.mealType]?.addAll(mealLog.foods);
+        // Add each food with its mealLogId
+        for (final food in mealLog.foods) {
+          meals[mealLog.mealType]?.add(
+            food.copyWith(mealLogId: mealLog.id),
+          );
+        }
       }
 
       return meals;
@@ -111,14 +116,50 @@ class FoodService {
         throw Exception('User not authenticated');
       }
 
-      // The meal_log_foods entries will be automatically deleted due to CASCADE
-      await _supabase
-          .from('meal_logs')
-          .delete()
-          .eq('id', mealLogId)
-          .eq('user_id', userId);
+      // Start a transaction
+      await _supabase.rpc('begin_transaction');
+
+      try {
+        // Delete the meal_log_foods entries first
+        await _supabase
+            .from('meal_log_foods')
+            .delete()
+            .eq('meal_log_id', mealLogId);
+
+        // Then delete the meal log
+        await _supabase
+            .from('meal_logs')
+            .delete()
+            .eq('id', mealLogId)
+            .eq('user_id', userId);
+
+        // Commit the transaction
+        await _supabase.rpc('commit_transaction');
+      } catch (e) {
+        // Rollback on error
+        await _supabase.rpc('rollback_transaction');
+        throw e;
+      }
     } catch (e) {
       throw Exception('Failed to delete meal log: $e');
+    }
+  }
+
+  Future<void> deleteFoodFromMealLog(String mealLogId, String foodId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Delete only the specific food from meal_log_foods
+      await _supabase
+          .from('meal_log_foods')
+          .delete()
+          .eq('meal_log_id', mealLogId)
+          .eq('food_id', foodId);
+    } catch (e) {
+      throw Exception('Failed to delete food: $e');
     }
   }
 }
