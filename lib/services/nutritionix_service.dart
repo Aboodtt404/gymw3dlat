@@ -21,11 +21,26 @@ class NutritionixService {
 
   // Search for foods using natural language
   Future<List<Food>> searchFoods(String query) async {
+    print('Searching foods with query: $query');
+    print('API Credentials configured: $isConfigured');
+    print('App ID length: ${_appId.length}');
+    print('API Key length: ${_apiKey.length}');
+
     if (!isConfigured) {
+      print('ERROR: Nutritionix API credentials not configured');
       throw Exception('Nutritionix API credentials not configured');
     }
 
     try {
+      // First try natural language endpoint
+      print('Making API request to: $_baseUrl/natural/nutrients');
+      print(
+          'Headers: ${_headers.map((k, v) => MapEntry(k, k.contains('key') ? '***' : v))}');
+      print('Query body: ${json.encode({
+            'query': query,
+            'line_delimited': false,
+          })}');
+
       final response = await http.post(
         Uri.parse('$_baseUrl/natural/nutrients'),
         headers: _headers,
@@ -35,42 +50,64 @@ class NutritionixService {
         }),
       );
 
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['foods'] == null) {
+          print('No foods found in response');
           return [];
         }
         final foods = List<Map<String, dynamic>>.from(data['foods']);
+        print('Found ${foods.length} foods');
         return foods.map((food) => _convertToFood(food)).toList();
       } else if (response.statusCode == 404) {
-        return [];
+        print('404: No foods found, trying instant search endpoint');
+        // Try instant search as fallback
+        return await searchInstant(query.split(' ').first);
       } else {
         print('Nutritionix API Error: ${response.body}');
         throw Exception('Failed to search foods: ${response.statusCode}');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Error searching foods: $e');
-      throw Exception('Failed to search foods: $e');
+      print('Stack trace: $stackTrace');
+
+      // Try instant search as fallback for any error
+      try {
+        print('Attempting fallback to instant search');
+        return await searchInstant(query.split(' ').first);
+      } catch (e2) {
+        print('Fallback search also failed: $e2');
+        throw Exception('Failed to search foods: $e2');
+      }
     }
   }
 
   // Search food items by keyword with detailed nutrition info
   Future<List<Food>> searchInstant(String query) async {
+    print('Using instant search endpoint with query: $query');
+
     if (!isConfigured) {
       throw Exception('Nutritionix API credentials not configured');
     }
 
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/search/instant?query=$query'),
+        Uri.parse(
+            '$_baseUrl/search/instant?query=${Uri.encodeComponent(query)}'),
         headers: _headers,
       );
+
+      print('Instant search response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<dynamic> commonFoods = data['common'] ?? [];
         final List<dynamic> brandedFoods = data['branded'] ?? [];
         final foods = [...commonFoods, ...brandedFoods];
+        print('Found ${foods.length} foods in instant search');
 
         // For each food item, get detailed nutrition info
         List<Food> detailedFoods = [];
@@ -88,12 +125,12 @@ class NutritionixService {
 
         return detailedFoods;
       } else {
-        print('Nutritionix API Error: ${response.body}');
-        throw Exception('Failed to search foods: ${response.statusCode}');
+        print('Instant search API Error: ${response.body}');
+        return [];
       }
     } catch (e) {
-      print('Error searching foods: $e');
-      throw Exception('Failed to search foods: $e');
+      print('Error in instant search: $e');
+      return [];
     }
   }
 

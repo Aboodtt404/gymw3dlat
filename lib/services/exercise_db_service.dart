@@ -70,14 +70,34 @@ class ExerciseDBService {
   // Get exercises by body part
   Future<List<Exercise>> getExercisesByBodyPart(String bodyPart) async {
     try {
-      final response = await _client.get(
-        Uri.parse('$_baseUrl/exercises/bodyPart/$bodyPart'),
-        headers: _headers,
-      );
+      print('Fetching exercises for body part: $bodyPart');
+      print('API Key: ${_headers['X-RapidAPI-Key']?.substring(0, 5)}...');
+
+      final uri = Uri.parse('$_baseUrl/exercises/bodyPart/$bodyPart');
+      print('Request URL: $uri');
+
+      final response = await _client.get(uri, headers: _headers);
+
+      print('Response status code: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('Error response body: ${response.body}');
+      }
+
       return _handleExerciseListResponse(response);
     } catch (e) {
+      print('Error getting exercises by body part: $e');
       throw Exception('Failed to get exercises by body part: $e');
     }
+  }
+
+  // Helper method to format exercise names
+  String _formatExerciseName(String name) {
+    // Split by spaces or hyphens
+    final words = name.split(RegExp(r'[ -]'));
+    // Capitalize first letter of each word and join back
+    return words
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 
   // Get single exercise by ID
@@ -90,6 +110,8 @@ class ExerciseDBService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        // Format the exercise name before creating the Exercise object
+        data['name'] = _formatExerciseName(data['name']);
         return Exercise.fromJson(data);
       } else {
         throw Exception('Failed to get exercise: ${response.statusCode}');
@@ -160,7 +182,11 @@ class ExerciseDBService {
   List<Exercise> _handleExerciseListResponse(http.Response response) {
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      return data.map((item) => Exercise.fromJson(item)).toList();
+      return data.map((item) {
+        // Format the exercise name before creating the Exercise object
+        item['name'] = _formatExerciseName(item['name']);
+        return Exercise.fromJson(item);
+      }).toList();
     } else {
       throw Exception('API request failed: ${response.statusCode}');
     }

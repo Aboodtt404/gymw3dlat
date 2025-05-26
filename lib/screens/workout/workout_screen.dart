@@ -7,6 +7,7 @@ import '../../services/workout_template_service.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/styles.dart';
 import 'workout_templates_screen.dart';
+import 'smart_workout_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
   const WorkoutScreen({super.key});
@@ -355,6 +356,22 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SmartWorkoutScreen(),
+            ),
+          );
+        },
+        backgroundColor: Styles.primaryColor,
+        icon: const Icon(Icons.auto_awesome, color: Colors.white),
+        label: const Text(
+          'Smart Workouts',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
     );
   }

@@ -7,8 +7,6 @@ import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/notifications_screen.dart';
-import '../../models/user_model.dart';
-import '../../providers/user_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

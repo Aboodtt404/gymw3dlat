@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:gymw3dlat/constants/app_constants.dart';
 import 'package:gymw3dlat/models/workout_models.dart';
 import 'package:gymw3dlat/services/workout_service.dart';
+import 'package:gymw3dlat/services/exercise_db_service.dart';
 import 'package:gymw3dlat/utils/styles.dart';
 import 'package:provider/provider.dart';
 import 'package:gymw3dlat/providers/user_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../services/voice_command_service.dart';
 import '../../widgets/voice_command_button.dart';
+import '../../providers/smart_workout_provider.dart';
 
 class ActiveWorkoutScreen extends StatefulWidget {
   final WorkoutTemplate? template;
@@ -21,9 +23,11 @@ class ActiveWorkoutScreen extends StatefulWidget {
 
 class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   final _workoutService = WorkoutService();
+  final _exerciseDBService = ExerciseDBService();
   final _notesController = TextEditingController();
-  late WorkoutLog _workoutLog;
+  WorkoutLog? _workoutLog;
   bool _isLoading = false;
+  bool _hasInitialized = false;
   int _currentExerciseIndex = 0;
   int _currentSetIndex = 0;
   DateTime? _startTime;
@@ -43,7 +47,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_isLoading) {
+    if (!_hasInitialized && !_isLoading) {
       _initializeWorkout();
     }
   }
@@ -86,26 +90,41 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     });
   }
 
-  void _initializeWorkout() {
+  Future<void> _initializeWorkout() async {
+    setState(() {
+      _isLoading = true;
+      _hasInitialized = true;
+    });
+
     try {
       final userData = context.read<UserProvider>().userData;
       if (userData == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please log in to start a workout'),
-              backgroundColor: Styles.errorColor,
-            ),
-          );
-          Navigator.pop(context);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please log in to start a workout'),
+                backgroundColor: Styles.errorColor,
+              ),
+            );
+            Navigator.pop(context);
+          });
         }
         return;
       }
 
-      final exercises = widget.template?.exercises.map((e) {
-            return ExerciseLog(
+      final exercises = <ExerciseLog>[];
+
+      // Fetch exercise details from ExerciseDB API
+      if (widget.template != null) {
+        for (final e in widget.template!.exercises) {
+          final exerciseDetails =
+              await _exerciseDBService.getExerciseById(e.exerciseId);
+          exercises.add(
+            ExerciseLog(
               exerciseId: e.exerciseId,
-              name: e.exerciseId,
+              name: exerciseDetails.name, // Use the name from the API
+              gifUrl: exerciseDetails.gifUrl, // Add the GIF URL
               sets: List.generate(
                 e.sets,
                 (index) => SetLog(
@@ -115,11 +134,12 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   completed: false,
                 ),
               ),
-            );
-          }).toList() ??
-          [];
+            ),
+          );
+        }
+      }
 
-      _workoutLog = WorkoutLog(
+      final workoutLog = WorkoutLog(
         id: const Uuid().v4(),
         userId: userData['auth_id'],
         templateId: widget.template?.id,
@@ -128,21 +148,33 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         startTime: DateTime.now(),
         createdAt: DateTime.now(),
       );
+
+      // Save the workout to the database
+      _workoutLog = await _workoutService.startWorkout(workoutLog);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error initializing workout: $e'),
-            backgroundColor: Styles.errorColor,
-          ),
-        );
-        Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error initializing workout: $e'),
+              backgroundColor: Styles.errorColor,
+            ),
+          );
+          Navigator.pop(context);
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
   Future<void> _completeSet(bool completed) async {
-    final exercise = _workoutLog.exercises[_currentExerciseIndex];
+    final workoutLog = _workoutLog;
+    if (workoutLog == null) return;
+
+    final exercise = workoutLog.exercises[_currentExerciseIndex];
     final set = exercise.sets[_currentSetIndex];
     final updatedSet = SetLog(
       setNumber: set.setNumber,
@@ -153,7 +185,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     );
 
     setState(() {
-      _workoutLog.exercises[_currentExerciseIndex].sets[_currentSetIndex] =
+      workoutLog.exercises[_currentExerciseIndex].sets[_currentSetIndex] =
           updatedSet;
     });
 
@@ -162,7 +194,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       setState(() {
         _currentSetIndex++;
       });
-    } else if (_currentExerciseIndex < _workoutLog.exercises.length - 1) {
+    } else if (_currentExerciseIndex < workoutLog.exercises.length - 1) {
       setState(() {
         _currentExerciseIndex++;
         _currentSetIndex = 0;
@@ -171,15 +203,123 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   }
 
   Future<void> _finishWorkout() async {
+    final workoutLog = _workoutLog;
+    if (workoutLog == null) return;
+
+    // Check if all sets are completed
+    final uncompletedSets = <String>[];
+    for (final exercise in workoutLog.exercises) {
+      final incompleteSets =
+          exercise.sets.where((set) => !set.completed).length;
+      if (incompleteSets > 0) {
+        uncompletedSets.add('${exercise.name}: $incompleteSets sets remaining');
+      }
+    }
+
+    if (uncompletedSets.isNotEmpty) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Incomplete Workout'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('You still have uncompleted sets:'),
+                const SizedBox(height: 8),
+                ...uncompletedSets.map((set) => Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text('• $set'),
+                    )),
+                const SizedBox(height: 16),
+                const Text(
+                    'Do you want to mark these sets as failed and finish the workout?'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Continue Workout'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _finishIncompleteWorkout();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+                child: const Text('Mark as Failed & Finish'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      final updatedLog = _workoutLog.copyWith(
+      final updatedLog = workoutLog.copyWith(
         endTime: DateTime.now(),
         notes: _notesController.text,
         updatedAt: DateTime.now(),
       );
 
       await _workoutService.endWorkout(updatedLog);
+
+      // Analyze workout performance
+      final smartWorkoutProvider = context.read<SmartWorkoutProvider>();
+      await smartWorkoutProvider.analyzeWorkoutPerformance(updatedLog);
+
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving workout: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Styles.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _finishIncompleteWorkout() async {
+    final workoutLog = _workoutLog;
+    if (workoutLog == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      // Mark all incomplete sets as failed
+      for (final exercise in workoutLog.exercises) {
+        for (int i = 0; i < exercise.sets.length; i++) {
+          if (!exercise.sets[i].completed) {
+            exercise.sets[i] = exercise.sets[i].copyWith(completed: false);
+          }
+        }
+      }
+
+      final updatedLog = workoutLog.copyWith(
+        endTime: DateTime.now(),
+        notes: '${_notesController.text}\n[Workout ended with incomplete sets]',
+        updatedAt: DateTime.now(),
+      );
+
+      await _workoutService.endWorkout(updatedLog);
+
+      // Analyze workout performance even for incomplete workouts
+      final smartWorkoutProvider = context.read<SmartWorkoutProvider>();
+      await smartWorkoutProvider.analyzeWorkoutPerformance(updatedLog);
+
       if (mounted) {
         Navigator.pop(context, true);
       }
@@ -286,7 +426,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_workoutLog.exercises.isEmpty) {
+    if (_isLoading || _workoutLog == null) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -294,11 +434,12 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       );
     }
 
-    final currentExercise = _workoutLog.exercises[_currentExerciseIndex];
+    final workoutLog = _workoutLog!;
+    final currentExercise = workoutLog.exercises[_currentExerciseIndex];
     final currentSet = currentExercise.sets[_currentSetIndex];
     final isLastSet = _currentSetIndex == currentExercise.sets.length - 1;
     final isLastExercise =
-        _currentExerciseIndex == _workoutLog.exercises.length - 1;
+        _currentExerciseIndex == workoutLog.exercises.length - 1;
 
     return WillPopScope(
       onWillPop: () async {
@@ -323,7 +464,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_workoutLog.name),
+          title: Text(workoutLog.name),
           actions: [
             IconButton(
               icon: const Icon(Icons.save),
@@ -449,11 +590,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   }
 
   Widget _buildProgress() {
-    final totalSets = _workoutLog.exercises.fold<int>(
+    final workoutLog = _workoutLog;
+    if (workoutLog == null) return const SizedBox();
+
+    final totalSets = workoutLog.exercises.fold<int>(
       0,
       (sum, exercise) => sum + exercise.sets.length,
     );
-    final completedSets = _workoutLog.exercises.fold<int>(
+    final completedSets = workoutLog.exercises.fold<int>(
       0,
       (sum, exercise) =>
           sum + exercise.sets.where((set) => set.completed).length,
@@ -500,6 +644,45 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         padding: const EdgeInsets.all(AppConstants.defaultPadding),
         child: Column(
           children: [
+            if (_workoutLog != null &&
+                _workoutLog!.exercises[_currentExerciseIndex].gifUrl != null)
+              Container(
+                height: 200,
+                width: double.infinity,
+                margin:
+                    const EdgeInsets.only(bottom: AppConstants.defaultPadding),
+                decoration: BoxDecoration(
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.defaultBorderRadius),
+                  color: Colors.black.withOpacity(0.1),
+                ),
+                child: ClipRRect(
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.defaultBorderRadius),
+                  child: Image.network(
+                    _workoutLog!.exercises[_currentExerciseIndex].gifUrl!,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => const Center(
+                      child: Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -553,7 +736,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   }
 
   Future<void> _saveAsTemplate() async {
-    final nameController = TextEditingController(text: _workoutLog.name);
+    final workoutLog = _workoutLog;
+    if (workoutLog == null) return;
+
+    final nameController = TextEditingController(text: workoutLog.name);
 
     final result = await showDialog<String>(
       context: context,
@@ -584,7 +770,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
         setState(() => _isLoading = true);
 
         // Convert workout log to template
-        final exercises = _workoutLog.exercises
+        final exercises = workoutLog.exercises
             .map((e) => ExerciseSet(
                   exerciseId: e.exerciseId,
                   sets: e.sets.length,
@@ -594,13 +780,13 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             .toList();
 
         // Calculate estimated duration based on workout log
-        final estimatedDuration = _workoutLog.endTime != null
-            ? _workoutLog.endTime!.difference(_workoutLog.startTime).inMinutes
+        final estimatedDuration = workoutLog.endTime != null
+            ? workoutLog.endTime!.difference(workoutLog.startTime).inMinutes
             : _elapsed.inMinutes;
 
         final template = WorkoutTemplate(
           id: const Uuid().v4(),
-          userId: _workoutLog.userId,
+          userId: workoutLog.userId,
           name: result.trim(),
           description: '',
           exercises: exercises,

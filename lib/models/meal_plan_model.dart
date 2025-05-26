@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:gymw3dlat/services/supabase_service.dart';
 
 enum MealType { breakfast, lunch, dinner, snack, preworkout, postworkout }
 

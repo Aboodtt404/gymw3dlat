@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
-import 'dart:typed_data';
 
 /// Provider class that manages user authentication and profile data
 class UserProvider extends ChangeNotifier {

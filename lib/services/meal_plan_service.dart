@@ -1,6 +1,5 @@
 import 'package:gymw3dlat/models/meal_plan_model.dart';
 import 'package:gymw3dlat/services/supabase_service.dart';
-import 'package:gymw3dlat/constants/app_constants.dart';
 
 class MealPlanService {
   static const String tableName = 'meal_plans';

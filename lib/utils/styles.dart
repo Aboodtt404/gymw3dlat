@@ -2,30 +2,30 @@ import 'package:flutter/material.dart';
 
 class Styles {
   // Primary colors
-  static const primaryColor = Color(0xFF6200EE);
+  static const primaryColor = Color(0xFF6C63FF);
   static const primaryVariantColor = Color(0xFF3700B3);
-  static const secondaryColor = Color(0xFF03DAC6);
+  static const secondaryColor = Color(0xFF00BFA6);
   static const secondaryVariantColor = Color(0xFF018786);
-  static const accentColor = Color(0xFF00BFA6);
+  static const accentColor = Color(0xFFFF5252);
 
   // Background colors
-  static const backgroundColor = Color(0xFFF5F5F5);
+  static const backgroundColor = Color(0xFF1A1A1A);
   static const darkBackground = Color(0xFF121212);
   static const surfaceColor = Colors.white;
   static const darkSurfaceColor = Color(0xFF1E1E1E);
-  static const cardBackground = Color(0xFF242438);
+  static const cardBackground = Color(0xFF2D2D2D);
 
   // Text colors
   static const primaryText = Color(0xFF000000);
   static const secondaryText = Color(0xFF666666);
-  static const subtleText = Color(0xFF999999);
+  static const subtleText = Color(0xFFB3B3B3);
   static const onPrimaryText = Colors.white;
   static const textColor = Color(0xFFF7F7F7);
 
   // Status colors
   static const successColor = Color(0xFF4CAF50);
   static const warningColor = Color(0xFFFFC107);
-  static const errorColor = Color(0xFFFF6B6B);
+  static const errorColor = Color(0xFFFF5252);
 
   // Nutrition colors
   static const proteinColor = Color(0xFF4CAF50);
@@ -37,54 +37,75 @@ class Styles {
   static const double buttonElevation = 4.0;
 
   // Gradients
-  static LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryColor, primaryColor.withOpacity(0.8)],
+  static final backgroundGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
+    colors: [
+      backgroundColor,
+      backgroundColor.withOpacity(0.8),
+    ],
   );
 
-  static LinearGradient backgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
+  static final sportGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
     colors: [
-      darkBackground,
-      primaryColor.withOpacity(0.05),
-      darkBackground,
+      primaryColor,
+      primaryColor.withOpacity(0.8),
+    ],
+  );
+
+  static final cardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      cardBackground.withOpacity(0.9),
+      cardBackground.withOpacity(0.7),
     ],
   );
 
   // Text Styles
-  static const TextStyle headingStyle = TextStyle(
-    color: textColor,
-    fontSize: 24,
+  static const headingStyle = TextStyle(
+    fontSize: 28,
     fontWeight: FontWeight.bold,
+    color: Colors.white,
     letterSpacing: 0.5,
   );
 
-  static const TextStyle subheadingStyle = TextStyle(
-    color: subtleText,
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
+  static const subheadingStyle = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
     letterSpacing: 0.3,
   );
 
-  static const TextStyle bodyStyle = TextStyle(
-    color: textColor,
-    fontSize: 14,
+  static const bodyStyle = TextStyle(
+    fontSize: 16,
+    color: subtleText,
+    height: 1.5,
     letterSpacing: 0.2,
   );
 
   // Button Styles
-  static ButtonStyle primaryButtonStyle(BuildContext context) =>
-      ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
-        foregroundColor: textColor,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 2,
-      );
+  static final elevatedButtonStyle = ElevatedButton.styleFrom(
+    backgroundColor: primaryColor,
+    foregroundColor: Colors.white,
+    elevation: 8,
+    shadowColor: primaryColor.withOpacity(0.5),
+    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+  );
+
+  static final outlinedButtonStyle = OutlinedButton.styleFrom(
+    foregroundColor: Colors.white,
+    side: const BorderSide(color: Colors.white, width: 2),
+    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+  );
 
   static ButtonStyle secondaryButtonStyle(BuildContext context) =>
       ElevatedButton.styleFrom(
@@ -108,36 +129,44 @@ class Styles {
       );
 
   // Input Decoration
-  static InputDecoration textFieldDecoration(String label, IconData icon) =>
-      InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: subtleText),
-        prefixIcon: Icon(icon, color: subtleText),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: subtleText),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: subtleText.withOpacity(0.5)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor),
-        ),
-        filled: true,
-        fillColor: cardBackground,
-      );
+  static final inputDecoration = InputDecoration(
+    filled: true,
+    fillColor: cardBackground,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: primaryColor),
+    ),
+  );
 
   // Card Decoration
-  static BoxDecoration cardDecoration = BoxDecoration(
-    color: cardBackground,
-    borderRadius: BorderRadius.circular(16),
+  static final cardDecoration = BoxDecoration(
+    gradient: cardGradient,
+    borderRadius: BorderRadius.circular(15),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.1),
+        color: Colors.black.withOpacity(0.2),
         blurRadius: 10,
-        offset: const Offset(0, 4),
+        offset: const Offset(0, 5),
+      ),
+    ],
+  );
+
+  static final sportCardDecoration = BoxDecoration(
+    gradient: sportGradient,
+    borderRadius: BorderRadius.circular(15),
+    boxShadow: [
+      BoxShadow(
+        color: primaryColor.withOpacity(0.3),
+        blurRadius: 15,
+        offset: const Offset(0, 8),
       ),
     ],
   );
@@ -174,6 +203,64 @@ class Styles {
         backgroundColor: cardBackground,
         contentTextStyle: TextStyle(color: textColor),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // Text Field Decoration
+  static InputDecoration textFieldDecoration(
+    String labelText,
+    IconData? icon, {
+    String? hintText,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: icon != null ? Icon(icon, color: Colors.white70) : null,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: cardBackground,
+      labelStyle: const TextStyle(color: Colors.white70),
+      hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: primaryColor),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: errorColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: errorColor, width: 2),
+      ),
+    );
+  }
+
+  // Button Styles
+  static ButtonStyle primaryButtonStyle(BuildContext context) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: primaryColor,
+      foregroundColor: Colors.white,
+      elevation: 8,
+      shadowColor: primaryColor.withOpacity(0.5),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      textStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5,
       ),
     );
   }

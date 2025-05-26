@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'services/supabase_service.dart';
 import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/smart_workout_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main_screen.dart';
 
@@ -12,15 +13,26 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
-  // Debug print for API key validation
-  final apiKey = dotenv.env['EXERCISEDB_API_KEY'] ?? 'not found';
-  if (apiKey == 'not found') {
+  // Debug print for API keys validation
+  final exerciseDbKey = dotenv.env['EXERCISEDB_API_KEY'] ?? 'not found';
+  final nutritionixAppId = dotenv.env['NUTRITIONIX_APP_ID'] ?? 'not found';
+  final nutritionixApiKey = dotenv.env['NUTRITIONIX_API_KEY'] ?? 'not found';
+
+  if (exerciseDbKey == 'not found') {
     print('WARNING: ExerciseDB API key not found in .env file!');
   } else {
-    final maskedKey = apiKey.length > 8
-        ? '${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}'
+    final maskedKey = exerciseDbKey.length > 8
+        ? '${exerciseDbKey.substring(0, 4)}...${exerciseDbKey.substring(exerciseDbKey.length - 4)}'
         : '****';
     print('ExerciseDB API key loaded: $maskedKey');
+  }
+
+  if (nutritionixAppId == 'not found' || nutritionixApiKey == 'not found') {
+    print('WARNING: Nutritionix API credentials not found in .env file!');
+    print(
+        'Smart meal recommendations will not work without Nutritionix API credentials.');
+  } else {
+    print('Nutritionix API credentials loaded successfully');
   }
 
   await SupabaseService.initializeSupabase();
@@ -40,6 +52,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
         ChangeNotifierProvider(
             create: (_) => UserProvider(SupabaseService.client)),
+        ChangeNotifierProvider(create: (_) => SmartWorkoutProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {

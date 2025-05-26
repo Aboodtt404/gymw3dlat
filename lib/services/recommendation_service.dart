@@ -1,6 +1,4 @@
-import 'package:gymw3dlat/models/workout_models.dart';
 import 'package:gymw3dlat/services/workout_service.dart';
-import 'package:gymw3dlat/models/meal_plan_model.dart';
 import 'package:gymw3dlat/services/meal_plan_service.dart';
 
 class RecommendationService {

@@ -4,10 +4,8 @@ import '../../services/water_service.dart';
 import '../../services/food_service.dart';
 import '../../utils/styles.dart';
 import '../../constants/app_constants.dart';
-import '../auth/login_screen.dart';
 import '../workout/active_workout_screen.dart';
 import '../nutrition/nutrition_screen.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

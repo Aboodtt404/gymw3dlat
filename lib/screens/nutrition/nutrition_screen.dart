@@ -9,6 +9,9 @@ import '../../services/supabase_service.dart';
 import '../../styles/styles.dart';
 import 'food_search_screen.dart';
 import 'nutrition_insights_screen.dart';
+import 'dietary_preferences_screen.dart';
+import '../profile/user_profile_screen.dart';
+import 'natural_language_meal_screen.dart';
 
 class NutritionScreen extends StatefulWidget {
   const NutritionScreen({super.key});
@@ -482,6 +485,30 @@ class _NutritionScreenState extends State<NutritionScreen> {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.restaurant_menu),
+            tooltip: 'Dietary Preferences',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DietaryPreferencesScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: 'User Profile',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UserProfileScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () {
               // TODO: Implement date selection
@@ -500,6 +527,22 @@ class _NutritionScreenState extends State<NutritionScreen> {
                 _buildMealSection(MealType.snack),
               ],
             ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final mealLogged = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NaturalLanguageMealScreen(),
+            ),
+          );
+          // Refresh meals only if a meal was logged
+          if (mealLogged == true) {
+            await _loadMeals();
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Quick Log'),
+      ),
     );
   }
 
