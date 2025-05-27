@@ -78,7 +78,10 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
 
   Widget _buildHeader(SmartWorkoutProvider provider) {
     return Container(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.smallPadding,
+        vertical: AppConstants.smallPadding,
+      ),
       decoration: BoxDecoration(
         gradient: Styles.cardGradient,
         borderRadius: BorderRadius.only(
@@ -99,39 +102,72 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  const Text(
-                    'Smart Workouts',
-                    style: Styles.headingStyle,
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back,
+                          color: Colors.white, size: 20),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Smart Workouts',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: provider.isLoading
-                        ? null
-                        : () async {
-                            await provider.clearFitnessProfileFromDatabase();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Profile cleared for testing'),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
-                          },
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          color: Colors.red, size: 20),
+                      onPressed: provider.isLoading
+                          ? null
+                          : () async {
+                              await provider.clearFitnessProfileFromDatabase();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Profile cleared for testing'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              }
+                            },
+                      padding: EdgeInsets.zero,
+                      tooltip: 'Clear Profile',
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Styles.primaryColor),
-                    onPressed: provider.isLoading
-                        ? null
-                        : () => provider.refreshRecommendations(),
+                  const SizedBox(width: 2),
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh,
+                          color: Styles.primaryColor, size: 20),
+                      onPressed: provider.isLoading
+                          ? null
+                          : () => provider.refreshRecommendations(),
+                      padding: EdgeInsets.zero,
+                      tooltip: 'Refresh Recommendations',
+                    ),
                   ),
                 ],
               ),
@@ -221,8 +257,10 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
 
   Widget _buildTabBar() {
     return Container(
-      margin:
-          const EdgeInsets.symmetric(horizontal: AppConstants.defaultPadding),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+        vertical: AppConstants.smallPadding,
+      ),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         gradient: Styles.cardGradient,
@@ -253,9 +291,11 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
         labelStyle: const TextStyle(
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
+          fontSize: 14,
         ),
         unselectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.normal,
+          fontSize: 14,
         ),
         tabs: const [
           Tab(text: 'Recommendations'),
@@ -282,16 +322,22 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
     return RefreshIndicator(
       onRefresh: () => provider.refreshRecommendations(),
       child: ListView.builder(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.defaultPadding,
+          vertical: AppConstants.smallPadding,
+        ),
         itemCount: provider.recommendations.length,
         itemBuilder: (context, index) {
           final recommendation = provider.recommendations[index];
-          return WorkoutRecommendationCard(
-            recommendation: recommendation,
-            onTap: () => _handleRecommendationTap(recommendation, provider),
-            onAdapt: () => _showAdaptationDialog(recommendation, provider),
-            onFavorite: () => _toggleFavorite(recommendation, provider),
-            isFavorite: false, // TODO: Implement favorites functionality
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppConstants.defaultPadding),
+            child: WorkoutRecommendationCard(
+              recommendation: recommendation,
+              onTap: () => _handleRecommendationTap(recommendation, provider),
+              onAdapt: () => _showAdaptationDialog(recommendation, provider),
+              onFavorite: () => _toggleFavorite(recommendation, provider),
+              isFavorite: false, // TODO: Implement favorites functionality
+            ),
           );
         },
       ),
@@ -300,7 +346,10 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
 
   Widget _buildProgressTab(SmartWorkoutProvider provider) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+        vertical: AppConstants.smallPadding,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -309,6 +358,7 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
           _buildProgressionPlanCard(provider),
           const SizedBox(height: AppConstants.defaultPadding),
           _buildPerformanceCard(provider),
+          const SizedBox(height: AppConstants.defaultPadding),
         ],
       ),
     );
@@ -318,7 +368,10 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
     final stats = provider.getWorkoutStatistics();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+        vertical: AppConstants.smallPadding,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -327,6 +380,7 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
           _buildRecommendationsInsights(provider),
           const SizedBox(height: AppConstants.defaultPadding),
           _buildPerformanceInsights(provider),
+          const SizedBox(height: AppConstants.defaultPadding),
         ],
       ),
     );
@@ -627,42 +681,35 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
         children: [
           const Text('Workout Statistics', style: Styles.subheadingStyle),
           const SizedBox(height: AppConstants.defaultPadding),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildStatItem(
                   'Total Recommendations',
                   stats['total_recommendations'].toString(),
                   Icons.fitness_center,
                 ),
-              ),
-              Expanded(
-                child: _buildStatItem(
+                const SizedBox(width: AppConstants.defaultPadding),
+                _buildStatItem(
                   'Avg Duration',
                   '${stats['average_duration']} min',
                   Icons.schedule,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppConstants.defaultPadding),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
+                const SizedBox(width: AppConstants.defaultPadding),
+                _buildStatItem(
                   'Avg Difficulty',
                   '${stats['average_difficulty'].toStringAsFixed(1)}/10',
                   Icons.trending_up,
                 ),
-              ),
-              Expanded(
-                child: _buildStatItem(
+                const SizedBox(width: AppConstants.defaultPadding),
+                _buildStatItem(
                   'Most Common',
                   stats['most_common_intensity'],
                   Icons.flash_on,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -670,21 +717,33 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
   }
 
   Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon,
-            color: Styles.primaryColor, size: AppConstants.largeIconSize),
-        const SizedBox(height: AppConstants.smallPadding),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Styles.primaryColor,
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      decoration: BoxDecoration(
+        color: Styles.primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon,
+              color: Styles.primaryColor, size: AppConstants.largeIconSize),
+          const SizedBox(height: AppConstants.smallPadding),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Styles.primaryColor,
+            ),
           ),
-        ),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -729,10 +788,91 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
           if (analysis != null && analysis.recommendations.isNotEmpty) ...[
             const Text('AI Recommendations:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            ...analysis.recommendations.map((rec) => Text('• $rec')),
+            const SizedBox(height: AppConstants.smallPadding),
+            ...analysis.recommendations.map((rec) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('• ',
+                          style: TextStyle(color: Styles.primaryColor)),
+                      Expanded(
+                        child: Text(
+                          rec,
+                          style: const TextStyle(height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+            if (analysis.strengths.isNotEmpty) ...[
+              const SizedBox(height: AppConstants.defaultPadding),
+              const Text('Strengths:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: AppConstants.smallPadding),
+              ...analysis.strengths.map((strength) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.check_circle,
+                            color: Styles.successColor, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            strength,
+                            style: const TextStyle(height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+            if (analysis.weaknesses.isNotEmpty) ...[
+              const SizedBox(height: AppConstants.defaultPadding),
+              const Text('Areas for Improvement:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: AppConstants.smallPadding),
+              ...analysis.weaknesses.map((weakness) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline,
+                            color: Styles.warningColor, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            weakness,
+                            style: const TextStyle(height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
           ] else ...[
-            const Text(
-                'Complete a workout to get personalized performance insights and recommendations.'),
+            Container(
+              padding: const EdgeInsets.all(AppConstants.defaultPadding),
+              decoration: BoxDecoration(
+                color: Styles.primaryColor.withOpacity(0.1),
+                borderRadius:
+                    BorderRadius.circular(AppConstants.defaultBorderRadius),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline,
+                      color: Styles.primaryColor.withOpacity(0.7)),
+                  const SizedBox(width: AppConstants.smallPadding),
+                  const Expanded(
+                    child: Text(
+                      'Complete a workout to get personalized performance insights and recommendations.',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ],
       ),

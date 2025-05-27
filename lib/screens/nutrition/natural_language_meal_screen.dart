@@ -202,6 +202,11 @@ class _NaturalLanguageMealScreenState extends State<NaturalLanguageMealScreen> {
         foods: _parsedFoods!,
         mealType: _selectedMealType,
         loggedAt: DateTime.now(),
+        storedCalories:
+            _parsedFoods!.fold(0, (sum, food) => sum + food.calories),
+        storedProtein: _parsedFoods!.fold(0, (sum, food) => sum + food.protein),
+        storedCarbs: _parsedFoods!.fold(0, (sum, food) => sum + food.carbs),
+        storedFat: _parsedFoods!.fold(0, (sum, food) => sum + food.fat),
       );
 
       debugPrint('Meal log created: ${mealLog.toJson()}');

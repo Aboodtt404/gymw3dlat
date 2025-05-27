@@ -31,6 +31,17 @@ class FoodService {
         throw Exception('User not authenticated');
       }
 
+      final mealLog = MealLog(
+        userId: userId,
+        foods: [food],
+        mealType: mealType,
+        loggedAt: DateTime.now(),
+        storedCalories: food.calories,
+        storedProtein: food.protein,
+        storedCarbs: food.carbs,
+        storedFat: food.fat,
+      );
+
       // Start a transaction
       await _supabase.rpc('begin_transaction');
 
@@ -39,9 +50,15 @@ class FoodService {
         final mealLogResponse = await _supabase
             .from('meal_logs')
             .insert({
-              'user_id': userId,
-              'meal_type': mealType.name,
-              'logged_at': DateTime.now().toIso8601String(),
+              'id': mealLog.id,
+              'user_id': mealLog.userId,
+              'meal_type': mealLog.mealType.name,
+              'logged_at': mealLog.loggedAt.toIso8601String(),
+              'notes': mealLog.notes,
+              'total_calories': mealLog.storedCalories,
+              'total_protein': mealLog.storedProtein,
+              'total_carbs': mealLog.storedCarbs,
+              'total_fat': mealLog.storedFat,
             })
             .select()
             .single();

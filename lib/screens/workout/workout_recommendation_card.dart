@@ -61,7 +61,10 @@ class WorkoutRecommendationCard extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+        vertical: AppConstants.smallPadding,
+      ),
       decoration: BoxDecoration(
         gradient: _getIntensityGradient(recommendation.intensity),
         borderRadius: BorderRadius.only(
@@ -70,6 +73,7 @@ class WorkoutRecommendationCard extends StatelessWidget {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
@@ -78,13 +82,15 @@ class WorkoutRecommendationCard extends StatelessWidget {
                 Text(
                   recommendation.name,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     letterSpacing: 0.5,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     _buildIntensityChip(),
@@ -96,10 +102,11 @@ class WorkoutRecommendationCard extends StatelessWidget {
             ),
           ),
           Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (onFavorite != null)
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
@@ -108,14 +115,20 @@ class WorkoutRecommendationCard extends StatelessWidget {
                     icon: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
                       color: isFavorite ? Colors.red : Colors.white,
+                      size: 20,
                     ),
                     onPressed: onFavorite,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                 ),
               if (onAdapt != null)
                 Container(
                   margin: const EdgeInsets.only(top: AppConstants.smallPadding),
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
@@ -124,9 +137,15 @@ class WorkoutRecommendationCard extends StatelessWidget {
                     icon: const Icon(
                       Icons.tune,
                       color: Colors.white,
+                      size: 20,
                     ),
                     onPressed: onAdapt,
                     tooltip: 'Adapt Workout',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                 ),
             ],
@@ -137,15 +156,25 @@ class WorkoutRecommendationCard extends StatelessWidget {
   }
 
   Widget _buildDescription() {
-    return Text(
-      recommendation.description,
-      style: const TextStyle(
-        color: Colors.white70,
-        fontSize: 14,
-        height: 1.4,
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.smallPadding,
+        vertical: AppConstants.smallPadding / 2,
       ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+      ),
+      child: Text(
+        recommendation.description,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.9),
+          fontSize: 12,
+          height: 1.3,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 
@@ -153,7 +182,7 @@ class WorkoutRecommendationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
       decoration: BoxDecoration(
-        gradient: Styles.cardGradient,
+        color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
       ),
       child: Row(
@@ -162,22 +191,22 @@ class WorkoutRecommendationCard extends StatelessWidget {
           _buildMetricItem(
             Icons.schedule,
             '${recommendation.estimatedDuration}',
-            'Minutes',
+            'min',
           ),
           _buildMetricItem(
             Icons.fitness_center,
             '${recommendation.exercises.length}',
-            'Exercises',
+            'ex',
           ),
           _buildMetricItem(
             Icons.trending_up,
             recommendation.difficultyScore.toStringAsFixed(1),
-            'Difficulty',
+            'lvl',
           ),
           _buildMetricItem(
             Icons.psychology,
-            '${(recommendation.confidenceScore * 100).toInt()}%',
-            'AI Match',
+            '${(recommendation.confidenceScore * 100).toInt()}',
+            'match',
           ),
         ],
       ),
@@ -185,36 +214,34 @@ class WorkoutRecommendationCard extends StatelessWidget {
   }
 
   Widget _buildMetricItem(IconData icon, String value, String label) {
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.smallPadding),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: AppConstants.defaultIconSize,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(
+          children: [
+            Icon(
+              icon,
               color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+              size: 18,
             ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 12,
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
-          ),
-        ],
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -268,13 +295,14 @@ class WorkoutRecommendationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
       decoration: BoxDecoration(
-        gradient: Styles.cardGradient,
+        color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.fitness_center,
@@ -297,7 +325,10 @@ class WorkoutRecommendationCard extends StatelessWidget {
           ...previewExercises.map((exercise) {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(AppConstants.smallPadding),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.smallPadding,
+                vertical: AppConstants.smallPadding / 2,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.1),
                 borderRadius:
@@ -306,8 +337,8 @@ class WorkoutRecommendationCard extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    width: 24,
-                    height: 24,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: Styles.primaryColor.withOpacity(0.2),
                       shape: BoxShape.circle,
@@ -318,6 +349,7 @@ class WorkoutRecommendationCard extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -331,16 +363,29 @@ class WorkoutRecommendationCard extends StatelessWidget {
                           '${exercise.sets} sets × ${exercise.reps} reps',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        if (exercise.weight != null)
-                          Text(
-                            'Weight: ${exercise.weight}kg',
+                        if (exercise.weight != null ||
+                            exercise.restTime != null)
+                          DefaultTextStyle(
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.7),
-                              fontSize: 12,
+                              fontSize: 11,
+                            ),
+                            child: Row(
+                              children: [
+                                if (exercise.weight != null)
+                                  Text('${exercise.weight}kg'),
+                                if (exercise.weight != null &&
+                                    exercise.restTime != null)
+                                  Text(' • '),
+                                if (exercise.restTime != null)
+                                  Text('Rest: ${exercise.restTime}s'),
+                              ],
                             ),
                           ),
                       ],
@@ -357,7 +402,7 @@ class WorkoutRecommendationCard extends StatelessWidget {
                 '+${recommendation.exercises.length - 3} more exercises',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.7),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -369,50 +414,17 @@ class WorkoutRecommendationCard extends StatelessWidget {
 
   Widget _buildFooter() {
     return Container(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+        vertical: AppConstants.smallPadding,
+      ),
       decoration: BoxDecoration(
-        gradient: Styles.cardGradient,
+        color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.psychology,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'AI Reasoning',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  recommendation.reasoning,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppConstants.defaultPadding),
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.defaultPadding,
@@ -442,7 +454,7 @@ class WorkoutRecommendationCard extends StatelessWidget {
                   child: const Icon(
                     Icons.play_arrow,
                     color: Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
                 const SizedBox(width: AppConstants.smallPadding),

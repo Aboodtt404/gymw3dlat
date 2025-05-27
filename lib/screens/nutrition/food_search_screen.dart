@@ -4,6 +4,7 @@ import '../../models/meal_log_model.dart';
 import '../../services/food_service.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/styles.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FoodSearchScreen extends StatefulWidget {
   final MealType mealType;
@@ -23,6 +24,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
   List<Food> _searchResults = [];
   bool _isLoading = false;
   String? _error;
+  final _supabase = Supabase.instance.client;
 
   Future<void> _searchFoods(String query) async {
     if (query.isEmpty) {
@@ -54,14 +56,32 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
   void _selectFood(Food food) async {
     try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final mealLog = MealLog(
+        userId: userId,
+        foods: [food],
+        mealType: widget.mealType,
+        loggedAt: DateTime.now(),
+        storedCalories: food.calories,
+        storedProtein: food.protein,
+        storedCarbs: food.carbs,
+        storedFat: food.fat,
+      );
       await _foodService.logFood(food, widget.mealType);
       if (mounted) {
-        Navigator.pop(context, food);
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add food: $e')),
+          SnackBar(
+            content: Text('Failed to log food: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

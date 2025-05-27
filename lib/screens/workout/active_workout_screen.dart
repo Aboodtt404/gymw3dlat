@@ -189,12 +189,21 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
           updatedSet;
     });
 
-    // Move to next set or exercise
-    if (_currentSetIndex < exercise.sets.length - 1) {
+    // Check if this was the last set of the last exercise
+    final isLastSet = _currentSetIndex == exercise.sets.length - 1;
+    final isLastExercise =
+        _currentExerciseIndex == workoutLog.exercises.length - 1;
+
+    if (isLastSet && isLastExercise) {
+      // If this was the last set of the last exercise, show finish dialog
+      _finishWorkout();
+    } else if (_currentSetIndex < exercise.sets.length - 1) {
+      // Move to next set
       setState(() {
         _currentSetIndex++;
       });
     } else if (_currentExerciseIndex < workoutLog.exercises.length - 1) {
+      // Move to next exercise
       setState(() {
         _currentExerciseIndex++;
         _currentSetIndex = 0;
@@ -441,122 +450,101 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
     final isLastExercise =
         _currentExerciseIndex == workoutLog.exercises.length - 1;
 
-    return WillPopScope(
-      onWillPop: () async {
-        final shouldPop = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('End Workout?'),
-            content: const Text('Are you sure you want to end this workout?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('End'),
-              ),
-            ],
-          ),
-        );
-        return shouldPop ?? false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(workoutLog.name),
-          actions: [
+    // Calculate if all sets are completed
+    final allSetsCompleted = workoutLog.exercises.every(
+      (exercise) => exercise.sets.every((set) => set.completed),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(workoutLog.name),
+        actions: [
+          if (allSetsCompleted)
             IconButton(
-              icon: const Icon(Icons.save),
-              tooltip: 'Save as Template',
-              onPressed: _saveAsTemplate,
-            ),
-            IconButton(
-              icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
-              onPressed: () {
-                if (_isPaused) {
-                  _resumeTimer();
-                } else {
-                  _pauseTimer();
-                }
-              },
-            ),
-            TextButton(
+              icon: const Icon(Icons.check_circle_outline),
               onPressed: _finishWorkout,
-              child: const Text('Finish'),
+              tooltip: 'Finish Workout',
             ),
-            VoiceCommandButton(
-              isListening: _isListening,
-              onPressed: _toggleListening,
+          IconButton(
+            icon: const Icon(Icons.save_outlined),
+            onPressed: _saveAsTemplate,
+            tooltip: 'Save as Template',
+          ),
+          VoiceCommandButton(
+            isListening: _isListening,
+            onPressed: _toggleListening,
+          ),
+          IconButton(
+            icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
+            onPressed: _isPaused ? _resumeTimer : _pauseTimer,
+            tooltip: _isPaused ? 'Resume Workout' : 'Pause Workout',
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildTimer(),
+          const SizedBox(height: AppConstants.smallPadding),
+          _buildProgress(),
+          const SizedBox(height: AppConstants.smallPadding),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      currentExercise.name,
+                      style: Styles.headingStyle,
+                    ),
+                    const SizedBox(height: AppConstants.smallPadding),
+                    Text(
+                      'Set ${currentSet.setNumber} of ${currentExercise.sets.length}',
+                      style:
+                          Styles.bodyStyle.copyWith(color: Styles.subtleText),
+                    ),
+                    const SizedBox(height: AppConstants.defaultPadding),
+                    _buildSetDetails(currentSet),
+                    const SizedBox(height: AppConstants.defaultPadding),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  _buildTimer(),
-                  const SizedBox(height: AppConstants.defaultPadding),
-                  _buildProgress(),
-                  const SizedBox(height: AppConstants.defaultPadding),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.all(AppConstants.defaultPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            currentExercise.name,
-                            style: Styles.headingStyle,
-                          ),
-                          const SizedBox(height: AppConstants.smallPadding),
-                          Text(
-                            'Set ${currentSet.setNumber} of ${currentExercise.sets.length}',
-                            style: Styles.bodyStyle
-                                .copyWith(color: Styles.subtleText),
-                          ),
-                          const SizedBox(height: AppConstants.defaultPadding),
-                          _buildSetDetails(currentSet),
-                          const Spacer(),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () => _completeSet(false),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Colors.red.withOpacity(0.1),
-                                    foregroundColor: Colors.red,
-                                  ),
-                                  child: const Text('Failed'),
-                                ),
-                              ),
-                              const SizedBox(
-                                  width: AppConstants.defaultPadding),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () => _completeSet(true),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Colors.green.withOpacity(0.1),
-                                    foregroundColor: Colors.green,
-                                  ),
-                                  child: Text(
-                                    isLastSet && isLastExercise
-                                        ? 'Complete Workout'
-                                        : 'Complete Set',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppConstants.defaultPadding),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _completeSet(false),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.withOpacity(0.1),
+                      foregroundColor: Colors.red,
+                    ),
+                    child: const Text('Failed'),
+                  ),
+                ),
+                const SizedBox(width: AppConstants.defaultPadding),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _completeSet(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.withOpacity(0.1),
+                      foregroundColor: Colors.green,
+                    ),
+                    child: Text(
+                      isLastSet && isLastExercise
+                          ? 'Complete Workout'
+                          : 'Complete Set',
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -647,7 +635,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
             if (_workoutLog != null &&
                 _workoutLog!.exercises[_currentExerciseIndex].gifUrl != null)
               Container(
-                height: 200,
+                height: 180,
                 width: double.infinity,
                 margin:
                     const EdgeInsets.only(bottom: AppConstants.defaultPadding),
@@ -699,14 +687,20 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: AppConstants.defaultPadding),
+            const SizedBox(height: AppConstants.smallPadding),
             TextField(
               controller: _notesController,
               decoration: const InputDecoration(
                 labelText: 'Notes',
                 hintText: 'Add notes for this set...',
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 0,
+                  vertical: 8,
+                ),
               ),
-              maxLines: 2,
+              maxLines: 1,
+              style: const TextStyle(fontSize: 14),
             ),
           ],
         ),
@@ -721,15 +715,18 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   }) {
     return Column(
       children: [
-        Icon(icon, color: Styles.primaryColor),
-        const SizedBox(height: AppConstants.smallPadding),
+        Icon(icon, color: Styles.primaryColor, size: 20),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: Styles.bodyStyle.copyWith(color: Styles.subtleText),
+          style: Styles.bodyStyle.copyWith(
+            color: Styles.subtleText,
+            fontSize: 12,
+          ),
         ),
         Text(
           value,
-          style: Styles.headingStyle.copyWith(fontSize: 20),
+          style: Styles.headingStyle.copyWith(fontSize: 18),
         ),
       ],
     );

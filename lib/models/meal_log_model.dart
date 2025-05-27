@@ -12,6 +12,10 @@ class MealLog {
   final MealType mealType;
   final DateTime loggedAt;
   final String? notes;
+  final double storedCalories;
+  final double storedProtein;
+  final double storedCarbs;
+  final double storedFat;
 
   MealLog({
     String? id,
@@ -20,12 +24,23 @@ class MealLog {
     required this.mealType,
     required this.loggedAt,
     this.notes,
+    required this.storedCalories,
+    required this.storedProtein,
+    required this.storedCarbs,
+    required this.storedFat,
   }) : id = id ?? const Uuid().v4();
 
-  double get totalCalories => foods.fold(0, (sum, food) => sum + food.calories);
-  double get totalProtein => foods.fold(0, (sum, food) => sum + food.protein);
-  double get totalCarbs => foods.fold(0, (sum, food) => sum + food.carbs);
-  double get totalFat => foods.fold(0, (sum, food) => sum + food.fat);
+  double get totalCalories => storedCalories > 0
+      ? storedCalories
+      : foods.fold(0, (sum, food) => sum + food.calories);
+  double get totalProtein => storedProtein > 0
+      ? storedProtein
+      : foods.fold(0, (sum, food) => sum + food.protein);
+  double get totalCarbs => storedCarbs > 0
+      ? storedCarbs
+      : foods.fold(0, (sum, food) => sum + food.carbs);
+  double get totalFat =>
+      storedFat > 0 ? storedFat : foods.fold(0, (sum, food) => sum + food.fat);
 
   Map<String, dynamic> toJson() {
     return {
@@ -35,13 +50,19 @@ class MealLog {
       'logged_at': loggedAt.toIso8601String(),
       'notes': notes,
       'foods': foods.map((f) => f.toJson()).toList(),
+      'total_calories': storedCalories,
+      'total_protein': storedProtein,
+      'total_carbs': storedCarbs,
+      'total_fat': storedFat,
     };
   }
 
   factory MealLog.fromJson(Map<String, dynamic> json) {
-    final foodsList = (json['foods'] as List)
-        .map((f) => Food.fromJson(f as Map<String, dynamic>))
-        .toList();
+    final foodsList = (json['foods'] as List?)
+            ?.where((f) => f != null)
+            ?.map((f) => Food.fromJson(f as Map<String, dynamic>))
+            ?.toList() ??
+        [];
 
     return MealLog(
       id: json['id'] as String,
@@ -52,6 +73,10 @@ class MealLog {
       ),
       loggedAt: DateTime.parse(json['logged_at'] as String),
       notes: json['notes'] as String?,
+      storedCalories: (json['total_calories'] as num?)?.toDouble() ?? 0.0,
+      storedProtein: (json['total_protein'] as num?)?.toDouble() ?? 0.0,
+      storedCarbs: (json['total_carbs'] as num?)?.toDouble() ?? 0.0,
+      storedFat: (json['total_fat'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
