@@ -9,6 +9,8 @@ enum ExerciseCategory {
   other,
 }
 
+enum WorkoutIntensity { light, moderate, vigorous, extreme }
+
 class Exercise {
   final String id;
   final String name;

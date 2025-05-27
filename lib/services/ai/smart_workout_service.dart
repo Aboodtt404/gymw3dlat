@@ -1,7 +1,8 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import '../../models/ai_workout_models.dart';
-import '../../models/workout_models.dart';
+import '../../models/workout_models.dart'
+    show WorkoutIntensity, WorkoutLog, ExerciseCategory;
 import '../../models/exercise_model.dart' as exercise_api;
 import '../exercise_db_service.dart';
 import '../supabase_service.dart';
@@ -18,7 +19,7 @@ class SmartWorkoutService {
   static Map<String, List<exercise_api.Exercise>> _exerciseCache = {};
 
   /// Generate personalized workout recommendations based on user profile and history
-  Future<List<WorkoutRecommendation>> generateWorkoutRecommendations({
+  Future<List<AIWorkoutRecommendation>> generateWorkoutRecommendations({
     required String userId,
     int count = 3,
   }) async {
@@ -43,7 +44,7 @@ class SmartWorkoutService {
       final workoutFrequency = _analyzeWorkoutFrequency(recentWorkouts);
       final averagePerformance = _calculateAveragePerformance(performanceData);
 
-      final recommendations = <WorkoutRecommendation>[];
+      final recommendations = <AIWorkoutRecommendation>[];
 
       for (int i = 0; i < count; i++) {
         // Determine workout type based on muscle group balance and goals
@@ -224,8 +225,8 @@ class SmartWorkoutService {
   }
 
   /// Adapt workout based on real-time performance
-  Future<WorkoutRecommendation> adaptWorkout({
-    required WorkoutRecommendation originalWorkout,
+  Future<AIWorkoutRecommendation> adaptWorkout({
+    required AIWorkoutRecommendation originalWorkout,
     required Map<String, double> currentPerformance,
     required RecoveryStatus recoveryStatus,
   }) async {
@@ -240,7 +241,7 @@ class SmartWorkoutService {
         adaptedExercises.add(adaptedExercise);
       }
 
-      final adaptedWorkout = WorkoutRecommendation(
+      final adaptedWorkout = AIWorkoutRecommendation(
         id: '${originalWorkout.id}_adapted_${DateTime.now().millisecondsSinceEpoch}',
         userId: originalWorkout.userId,
         name: '${originalWorkout.name} (Adapted)',
@@ -359,7 +360,7 @@ class SmartWorkoutService {
     }
   }
 
-  Future<WorkoutRecommendation> _generateWorkoutRecommendation({
+  Future<AIWorkoutRecommendation> _generateWorkoutRecommendation({
     required UserFitnessProfile fitnessProfile,
     required String workoutType,
     required WorkoutIntensity intensity,
@@ -375,7 +376,7 @@ class SmartWorkoutService {
 
     final difficulty = _calculateDifficulty(fitnessProfile, exercises);
 
-    return WorkoutRecommendation(
+    return AIWorkoutRecommendation(
       id: 'rec_${DateTime.now().millisecondsSinceEpoch}_$index',
       userId: fitnessProfile.userId,
       name: _generateWorkoutName(workoutType, intensity),

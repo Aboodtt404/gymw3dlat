@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../models/ai_workout_models.dart';
+import '../../models/workout_models.dart' show WorkoutIntensity;
 import '../../utils/styles.dart';
 import '../../constants/app_constants.dart';
 
 class WorkoutRecommendationCard extends StatelessWidget {
-  final WorkoutRecommendation recommendation;
+  final AIWorkoutRecommendation recommendation;
   final VoidCallback? onTap;
   final VoidCallback? onAdapt;
   final VoidCallback? onFavorite;

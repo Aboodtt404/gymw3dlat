@@ -4,7 +4,7 @@ import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
 import 'workout/workout_screen.dart';
 import 'nutrition/nutrition_screen.dart';
-import 'recommendations_screen.dart';
+import 'insights/recommendations_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -23,7 +23,7 @@ class _MainScreenState extends State<MainScreen> {
     const ProfileScreen(),
   ];
 
-  @override 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_currentIndex],

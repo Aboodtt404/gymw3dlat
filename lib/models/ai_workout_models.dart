@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'workout_models.dart';
+import 'workout_models.dart' show WorkoutIntensity, ExerciseCategory;
 import 'user_model.dart';
 
 enum FitnessLevel {
@@ -7,13 +7,6 @@ enum FitnessLevel {
   intermediate,
   advanced,
   expert,
-}
-
-enum WorkoutIntensity {
-  light,
-  moderate,
-  vigorous,
-  extreme,
 }
 
 enum RecoveryStatus {
@@ -94,8 +87,63 @@ class UserFitnessProfile {
   }
 }
 
-@immutable
-class WorkoutRecommendation {
+class SmartExerciseSet {
+  final String exerciseId;
+  final int sets;
+  final int reps;
+  final double? weight;
+  final int? restTime;
+  final String? notes;
+  final double adaptationFactor;
+  final String adaptationReason;
+  final List<String> alternatives;
+  final Map<String, dynamic> progressionRules;
+
+  const SmartExerciseSet({
+    required this.exerciseId,
+    required this.sets,
+    required this.reps,
+    this.weight,
+    this.restTime,
+    this.notes,
+    required this.adaptationFactor,
+    required this.adaptationReason,
+    required this.alternatives,
+    required this.progressionRules,
+  });
+
+  factory SmartExerciseSet.fromJson(Map<String, dynamic> json) {
+    return SmartExerciseSet(
+      exerciseId: json['exercise_id'] as String,
+      sets: json['sets'] as int,
+      reps: json['reps'] as int,
+      weight: json['weight'] as double?,
+      restTime: json['rest_time'] as int?,
+      notes: json['notes'] as String?,
+      adaptationFactor: json['adaptation_factor'].toDouble(),
+      adaptationReason: json['adaptation_reason'] as String,
+      alternatives: List<String>.from(json['alternatives']),
+      progressionRules: Map<String, dynamic>.from(json['progression_rules']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'exercise_id': exerciseId,
+      'sets': sets,
+      'reps': reps,
+      'weight': weight,
+      'rest_time': restTime,
+      'notes': notes,
+      'adaptation_factor': adaptationFactor,
+      'adaptation_reason': adaptationReason,
+      'alternatives': alternatives,
+      'progression_rules': progressionRules,
+    };
+  }
+}
+
+class AIWorkoutRecommendation {
   final String id;
   final String userId;
   final String name;
@@ -110,7 +158,7 @@ class WorkoutRecommendation {
   final DateTime createdAt;
   final Map<String, dynamic> aiMetadata;
 
-  const WorkoutRecommendation({
+  const AIWorkoutRecommendation({
     required this.id,
     required this.userId,
     required this.name,
@@ -126,8 +174,8 @@ class WorkoutRecommendation {
     required this.aiMetadata,
   });
 
-  factory WorkoutRecommendation.fromJson(Map<String, dynamic> json) {
-    return WorkoutRecommendation(
+  factory AIWorkoutRecommendation.fromJson(Map<String, dynamic> json) {
+    return AIWorkoutRecommendation(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       name: json['name'] as String,
@@ -164,61 +212,6 @@ class WorkoutRecommendation {
       'created_at': createdAt.toIso8601String(),
       'ai_metadata': aiMetadata,
     };
-  }
-}
-
-@immutable
-class SmartExerciseSet extends ExerciseSet {
-  final double adaptationFactor; // How much to adjust based on performance
-  final String adaptationReason;
-  final List<String> alternatives; // Alternative exercise IDs
-  final Map<String, dynamic> progressionRules;
-
-  SmartExerciseSet({
-    required String exerciseId,
-    required int sets,
-    required int reps,
-    double? weight,
-    int? restTime,
-    String? notes,
-    required this.adaptationFactor,
-    required this.adaptationReason,
-    required this.alternatives,
-    required this.progressionRules,
-  }) : super(
-          exerciseId: exerciseId,
-          sets: sets,
-          reps: reps,
-          weight: weight,
-          restTime: restTime,
-          notes: notes,
-        );
-
-  factory SmartExerciseSet.fromJson(Map<String, dynamic> json) {
-    return SmartExerciseSet(
-      exerciseId: json['exercise_id'] as String,
-      sets: json['sets'] as int,
-      reps: json['reps'] as int,
-      weight: json['weight'] as double?,
-      restTime: json['rest_time'] as int?,
-      notes: json['notes'] as String?,
-      adaptationFactor: json['adaptation_factor'].toDouble(),
-      adaptationReason: json['adaptation_reason'] as String,
-      alternatives: List<String>.from(json['alternatives']),
-      progressionRules: Map<String, dynamic>.from(json['progression_rules']),
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    final baseJson = super.toJson();
-    baseJson.addAll({
-      'adaptation_factor': adaptationFactor,
-      'adaptation_reason': adaptationReason,
-      'alternatives': alternatives,
-      'progression_rules': progressionRules,
-    });
-    return baseJson;
   }
 }
 

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/ai_workout_models.dart';
+import '../../models/workout_models.dart' show WorkoutIntensity;
 import '../../providers/smart_workout_provider.dart';
 import '../../utils/styles.dart';
 import '../../constants/app_constants.dart';
 
 class WorkoutAdaptationDialog extends StatefulWidget {
-  final WorkoutRecommendation originalWorkout;
+  final AIWorkoutRecommendation originalWorkout;
 
   const WorkoutAdaptationDialog({
     super.key,

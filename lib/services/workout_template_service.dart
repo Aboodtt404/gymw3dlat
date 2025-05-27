@@ -1,13 +1,12 @@
 import '../models/workout_template_model.dart';
 import 'supabase_service.dart';
+import '../constants/app_constants.dart';
 
 class WorkoutTemplateService {
-  static const String _tableName = 'workout_templates';
-
   // Create a new workout template
   Future<WorkoutTemplate> createTemplate(WorkoutTemplate template) async {
     final response = await SupabaseService.client
-        .from(_tableName)
+        .from(AppConstants.workoutsCollection)
         .insert(template.toJson())
         .select()
         .single();
@@ -21,7 +20,7 @@ class WorkoutTemplateService {
     if (userId == null) throw Exception('User not authenticated');
 
     final response = await SupabaseService.client
-        .from(_tableName)
+        .from(AppConstants.workoutsCollection)
         .select()
         .eq('user_id', userId)
         .order('created_at', ascending: false);
@@ -34,7 +33,7 @@ class WorkoutTemplateService {
   // Get a specific template by ID
   Future<WorkoutTemplate> getTemplateById(String id) async {
     final response = await SupabaseService.client
-        .from(_tableName)
+        .from(AppConstants.workoutsCollection)
         .select()
         .eq('id', id)
         .single();
@@ -45,7 +44,7 @@ class WorkoutTemplateService {
   // Update an existing template
   Future<WorkoutTemplate> updateTemplate(WorkoutTemplate template) async {
     final response = await SupabaseService.client
-        .from(_tableName)
+        .from(AppConstants.workoutsCollection)
         .update(template.toJson())
         .eq('id', template.id)
         .select()
@@ -56,6 +55,9 @@ class WorkoutTemplateService {
 
   // Delete a template
   Future<void> deleteTemplate(String id) async {
-    await SupabaseService.client.from(_tableName).delete().eq('id', id);
+    await SupabaseService.client
+        .from(AppConstants.workoutsCollection)
+        .delete()
+        .eq('id', id);
   }
 }

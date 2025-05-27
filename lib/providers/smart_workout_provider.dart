@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/ai_workout_models.dart';
-import '../models/workout_models.dart';
+import '../models/workout_models.dart' show WorkoutIntensity, WorkoutLog;
 import '../services/ai/smart_workout_service.dart';
 import '../services/supabase_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,7 +9,7 @@ class SmartWorkoutProvider with ChangeNotifier {
   final SmartWorkoutService _smartWorkoutService = SmartWorkoutService();
 
   // State variables
-  List<WorkoutRecommendation> _recommendations = [];
+  List<AIWorkoutRecommendation> _recommendations = [];
   UserFitnessProfile? _fitnessProfile;
   WorkoutPerformanceAnalysis? _lastPerformanceAnalysis;
   ProgressionPlan? _progressionPlan;
@@ -17,7 +17,7 @@ class SmartWorkoutProvider with ChangeNotifier {
   String? _error;
 
   // Getters
-  List<WorkoutRecommendation> get recommendations => _recommendations;
+  List<AIWorkoutRecommendation> get recommendations => _recommendations;
   UserFitnessProfile? get fitnessProfile => _fitnessProfile;
   WorkoutPerformanceAnalysis? get lastPerformanceAnalysis =>
       _lastPerformanceAnalysis;
@@ -200,8 +200,8 @@ class SmartWorkoutProvider with ChangeNotifier {
   }
 
   /// Adapt a workout based on current performance
-  Future<WorkoutRecommendation?> adaptWorkout({
-    required WorkoutRecommendation originalWorkout,
+  Future<AIWorkoutRecommendation?> adaptWorkout({
+    required AIWorkoutRecommendation originalWorkout,
     required Map<String, double> currentPerformance,
     required RecoveryStatus recoveryStatus,
   }) async {
@@ -230,7 +230,7 @@ class SmartWorkoutProvider with ChangeNotifier {
   }
 
   /// Get workout recommendation by ID
-  WorkoutRecommendation? getRecommendationById(String id) {
+  AIWorkoutRecommendation? getRecommendationById(String id) {
     try {
       return _recommendations.firstWhere((rec) => rec.id == id);
     } catch (e) {
@@ -256,20 +256,21 @@ class SmartWorkoutProvider with ChangeNotifier {
   }
 
   /// Get recommendations by intensity
-  List<WorkoutRecommendation> getRecommendationsByIntensity(
+  List<AIWorkoutRecommendation> getRecommendationsByIntensity(
       WorkoutIntensity intensity) {
     return _recommendations.where((rec) => rec.intensity == intensity).toList();
   }
 
   /// Get recommendations by focus area
-  List<WorkoutRecommendation> getRecommendationsByFocusArea(String focusArea) {
+  List<AIWorkoutRecommendation> getRecommendationsByFocusArea(
+      String focusArea) {
     return _recommendations
         .where((rec) => rec.focusAreas.contains(focusArea))
         .toList();
   }
 
   /// Get recommendations by duration
-  List<WorkoutRecommendation> getRecommendationsByDuration(
+  List<AIWorkoutRecommendation> getRecommendationsByDuration(
       int minDuration, int maxDuration) {
     return _recommendations
         .where((rec) =>

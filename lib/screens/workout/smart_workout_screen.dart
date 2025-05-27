@@ -99,9 +99,17 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Smart Workouts',
-                style: Styles.headingStyle,
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  const Text(
+                    'Smart Workouts',
+                    style: Styles.headingStyle,
+                  ),
+                ],
               ),
               Row(
                 children: [
@@ -759,7 +767,7 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
   }
 
   void _handleRecommendationTap(
-      WorkoutRecommendation recommendation, SmartWorkoutProvider provider) {
+      AIWorkoutRecommendation recommendation, SmartWorkoutProvider provider) {
     // Convert AI recommendation to WorkoutTemplate for ActiveWorkoutScreen
     final workoutTemplate = _convertRecommendationToTemplate(recommendation);
 
@@ -797,7 +805,7 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
   }
 
   void _showAdaptationDialog(
-      WorkoutRecommendation recommendation, SmartWorkoutProvider provider) {
+      AIWorkoutRecommendation recommendation, SmartWorkoutProvider provider) {
     showDialog(
       context: context,
       builder: (context) => WorkoutAdaptationDialog(
@@ -821,7 +829,7 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
   }
 
   void _toggleFavorite(
-      WorkoutRecommendation recommendation, SmartWorkoutProvider provider) {
+      AIWorkoutRecommendation recommendation, SmartWorkoutProvider provider) {
     // TODO: Implement favorites functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Favorites feature coming soon!')),
@@ -840,7 +848,7 @@ class _SmartWorkoutScreenState extends State<SmartWorkoutScreen>
 
   /// Convert AI workout recommendation to WorkoutTemplate for ActiveWorkoutScreen
   WorkoutTemplate _convertRecommendationToTemplate(
-      WorkoutRecommendation recommendation) {
+      AIWorkoutRecommendation recommendation) {
     final userId = SupabaseService.currentUser?.id ?? '';
 
     final templateExercises = recommendation.exercises.map((smartExercise) {

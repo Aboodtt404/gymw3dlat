@@ -6,6 +6,7 @@ import '../../utils/styles.dart';
 import '../../constants/app_constants.dart';
 import '../workout/active_workout_screen.dart';
 import '../nutrition/nutrition_screen.dart';
+import '../insights/recommendations_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -147,6 +148,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Home'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.insights),
+            tooltip: 'Recommendations',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RecommendationsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: Container(
         decoration: BoxDecoration(gradient: Styles.backgroundGradient),
         child: SafeArea(

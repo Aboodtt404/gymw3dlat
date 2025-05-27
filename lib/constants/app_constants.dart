@@ -6,8 +6,12 @@ class AppConstants {
   // Collections
   static const String nutritionCollection = 'nutrition';
   static const String mealLogsCollection = 'meal_logs';
-  static const String workoutsCollection = 'workouts';
+  static const String workoutsCollection = 'workout_templates';
   static const String exercisesCollection = 'exercises';
+  static const String workoutLogsCollection = 'workout_logs';
+  static const String userFitnessProfilesCollection = 'user_fitness_profiles';
+  static const String workoutPerformanceAnalysisCollection =
+      'workout_performance_analysis';
 
   // Workout Goals
   static const List<String> workoutGoals = [
