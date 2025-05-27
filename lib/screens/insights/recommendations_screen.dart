@@ -258,7 +258,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                       children: rec.focusAreas
                           .map((area) => Chip(
                                 label: Text(area),
-                                backgroundColor: Colors.blue[100],
+                                backgroundColor: const Color.fromARGB(255, 0, 53, 97),
                               ))
                           .toList(),
                     ),
@@ -308,7 +308,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                   children: _nutritionRecommendations!.recommendedFoods
                       .map((food) => Chip(
                             label: Text(food),
-                            backgroundColor: Colors.green[100],
+                            backgroundColor: const Color.fromARGB(255, 12, 126, 15),
                           ))
                       .toList(),
                 ),

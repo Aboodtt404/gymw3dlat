@@ -449,9 +449,23 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            _isExerciseSelected(exercise)
+                                ? Icons.check_circle
+                                : Icons.add_circle_outline,
+                            color: Color.fromARGB(255, 0, 0, 0),
+                          ),
+                          onPressed: () => _toggleExerciseSelection(exercise),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close,
+                              color: Color.fromARGB(255, 0, 0, 0)),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
                     ),
                   ),
                 ],
