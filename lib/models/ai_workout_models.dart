@@ -244,12 +244,19 @@ class WorkoutPerformanceAnalysis {
     return WorkoutPerformanceAnalysis(
       workoutLogId: json['workout_log_id'] as String,
       userId: json['user_id'] as String,
-      performanceScore: json['performance_score'].toDouble(),
+      performanceScore: (json['performance_score'] is int)
+          ? (json['performance_score'] as int).toDouble()
+          : json['performance_score'] as double,
       recoveryStatus: RecoveryStatus.values.firstWhere(
         (e) => e.toString().split('.').last == json['recovery_status'],
       ),
       exercisePerformance:
-          Map<String, double>.from(json['exercise_performance']),
+          (json['exercise_performance'] as Map<String, dynamic>).map(
+        (key, value) => MapEntry(
+          key,
+          value is int ? value.toDouble() : value as double,
+        ),
+      ),
       strengths: List<String>.from(json['strengths']),
       weaknesses: List<String>.from(json['weaknesses']),
       recommendations: List<String>.from(json['recommendations']),

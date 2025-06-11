@@ -24,6 +24,10 @@ class MealLogService {
             'meal_type': mealLog.mealType.name,
             'logged_at': mealLog.loggedAt.toIso8601String(),
             'notes': mealLog.notes,
+            'total_calories': mealLog.storedCalories,
+            'total_protein': mealLog.storedProtein,
+            'total_carbs': mealLog.storedCarbs,
+            'total_fat': mealLog.storedFat,
           })
           .select()
           .single();

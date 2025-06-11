@@ -162,13 +162,20 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               children: [
                 const Icon(Icons.date_range),
                 const SizedBox(width: 8),
-                Text(
-                  '${_startDate.toString().split(' ')[0]} to ${_endDate.toString().split(' ')[0]}',
-                  style: const TextStyle(fontSize: 16),
+                Expanded(
+                  child: Text(
+                    '${_startDate.toString().split(' ')[0]} to ${_endDate.toString().split(' ')[0]}',
+                    style: const TextStyle(fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
                 TextButton(
                   onPressed: _selectDateRange,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: const Text('Change'),
                 ),
               ],
@@ -251,7 +258,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                       children: rec.focusAreas
                           .map((area) => Chip(
                                 label: Text(area),
-                                backgroundColor: Colors.blue[100],
+                                backgroundColor: const Color.fromARGB(255, 0, 53, 97),
                               ))
                           .toList(),
                     ),
@@ -301,7 +308,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                   children: _nutritionRecommendations!.recommendedFoods
                       .map((food) => Chip(
                             label: Text(food),
-                            backgroundColor: Colors.green[100],
+                            backgroundColor: const Color.fromARGB(255, 12, 126, 15),
                           ))
                       .toList(),
                 ),

@@ -3,8 +3,6 @@ import '../../utils/styles.dart';
 import '../../constants/app_constants.dart';
 import '../../services/supabase_service.dart';
 import '../auth/login_screen.dart';
-import 'package:provider/provider.dart';
-import '../../providers/theme_provider.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/notifications_screen.dart';
 
@@ -72,8 +70,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: Styles.backgroundGradient),
@@ -104,14 +100,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _buildStatsCard(),
                             const SizedBox(height: AppConstants.defaultPadding),
                             _buildSettingsSection(),
-                            const SizedBox(height: AppConstants.defaultPadding),
-                            ListTile(
-                              title: const Text('Dark Mode'),
-                              trailing: Switch(
-                                value: themeProvider.isDarkMode,
-                                onChanged: (_) => themeProvider.toggleTheme(),
-                              ),
-                            ),
                           ],
                         ),
                       ),

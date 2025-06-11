@@ -211,7 +211,11 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: Padding(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+        ),
         padding: const EdgeInsets.all(AppConstants.defaultPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -248,15 +252,16 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
                   child: Text(category.toString().split('.').last),
                 );
               }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedCategory = value;
-                    _searchController.clear();
-                  });
-                  _loadExercises();
-                }
-              },
+              onChanged: _isSearchResult
+                  ? null
+                  : (category) {
+                      if (category != null) {
+                        setState(() {
+                          _selectedCategory = category;
+                        });
+                        _loadExercises();
+                      }
+                    },
             ),
             const SizedBox(height: AppConstants.defaultPadding),
             if (_isLoading)
@@ -270,94 +275,144 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
               )
             else
               Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _exercises.length,
-                  itemBuilder: (context, index) {
-                    final exercise = _exercises[index];
-                    String title, subtitle;
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _exercises.length,
+                        itemBuilder: (context, index) {
+                          final exercise = _exercises[index];
+                          String title, subtitle;
 
-                    if (_isSearchResult) {
-                      // API Exercise model
-                      final apiExercise = exercise as api_model.Exercise;
-                      title = apiExercise.name;
-                      subtitle =
-                          'Target: ${apiExercise.target}, Body Part: ${apiExercise.bodyPart}';
-                    } else {
-                      // Local Exercise model
-                      final localExercise = exercise as Exercise;
-                      title = localExercise.name;
-                      subtitle = localExercise.description;
-                    }
+                          if (_isSearchResult) {
+                            final apiExercise = exercise as api_model.Exercise;
+                            title = apiExercise.name;
+                            subtitle =
+                                'Target: ${apiExercise.target}, Body Part: ${apiExercise.bodyPart}';
+                          } else {
+                            final localExercise = exercise as Exercise;
+                            title = localExercise.name;
+                            subtitle = localExercise.description;
+                          }
 
-                    return RadioListTile<dynamic>(
-                      title: Text(title),
-                      subtitle: Text(
-                        subtitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: RadioListTile<dynamic>(
+                              title: Text(
+                                title,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              subtitle: Text(
+                                subtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              value: exercise,
+                              groupValue: _selectedExercise,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedExercise = value;
+                                });
+                              },
+                              dense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 0,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      value: exercise,
-                      groupValue: _selectedExercise,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedExercise = value;
-                        });
-                      },
-                    );
-                  },
+                      if (_selectedExercise != null) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _setsController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Sets',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                            const SizedBox(width: AppConstants.defaultPadding),
+                            Expanded(
+                              child: TextField(
+                                controller: _repsController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Reps',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _weightController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Weight (kg)',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                            const SizedBox(width: AppConstants.defaultPadding),
+                            Expanded(
+                              child: TextField(
+                                controller: _restController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Rest (sec)',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        TextField(
+                          controller: _notesController,
+                          decoration: const InputDecoration(
+                            labelText: 'Notes (optional)',
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 12,
+                            ),
+                          ),
+                          maxLines: 2,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-            if (_selectedExercise != null) ...[
-              const SizedBox(height: AppConstants.defaultPadding),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _setsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Sets',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: AppConstants.defaultPadding),
-                  Expanded(
-                    child: TextField(
-                      controller: _repsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Reps',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppConstants.defaultPadding),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _weightController,
-                      decoration: const InputDecoration(
-                        labelText: 'Weight (kg)',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: AppConstants.defaultPadding),
-                  Expanded(
-                    child: TextField(
-                      controller: _restController,
-                      decoration: const InputDecoration(
-                        labelText: 'Rest (seconds)',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-            ],
             const SizedBox(height: AppConstants.defaultPadding),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
