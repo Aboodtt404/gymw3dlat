@@ -8,6 +8,11 @@ import 'providers/user_provider.dart';
 import 'providers/smart_workout_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main_screen.dart';
+import 'package:uni_links/uni_links.dart';
+import 'dart:async';
+import 'screens/auth/reset_password_screen.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,16 +45,56 @@ Future<void> main() async {
   runApp(MyApp(prefs: prefs));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final SharedPreferences prefs;
 
   const MyApp({super.key, required this.prefs});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      _sub = uriLinkStream.listen((Uri? uri) {
+        if (uri != null &&
+            uri.scheme == 'gymw3dlat' &&
+            uri.host == 'reset-password') {
+          Navigator.of(navigatorKey.currentContext!).pushNamed(
+            '/reset-password',
+            arguments: uri.queryParameters,
+          );
+        }
+      });
+    } else if (kIsWeb) {
+      final uri = Uri.base;
+      if (uri.path == '/reset-password') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(navigatorKey.currentContext!).pushNamed(
+            '/reset-password',
+            arguments: uri.queryParameters,
+          );
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
+        ChangeNotifierProvider(create: (_) => ThemeProvider(widget.prefs)),
         ChangeNotifierProvider(
             create: (_) => UserProvider(SupabaseService.client)),
         ChangeNotifierProvider(create: (_) => SmartWorkoutProvider()),
@@ -57,16 +102,22 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
           return MaterialApp(
+            navigatorKey: navigatorKey,
             title: 'Gym App',
             theme: themeProvider.theme,
             debugShowCheckedModeBanner: false,
             home: const AuthWrapper(),
+            routes: {
+              '/reset-password': (context) => ResetPasswordScreen(),
+            },
           );
         },
       ),
     );
   }
 }
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});

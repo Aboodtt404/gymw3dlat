@@ -53,5 +53,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>gymw3dlat</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
